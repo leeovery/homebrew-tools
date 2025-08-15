@@ -1,25 +1,30 @@
+class GitHubPrivateDownloadStrategy < CurlDownloadStrategy
+  def _fetch(url:, resolved_url:, timeout:)
+    curl_args = ["--location", "--remote-time", "--output", temporary_path]
+    
+    # Add GitHub authentication for private repository access
+    if ENV["HOMEBREW_GITHUB_API_TOKEN"]
+      curl_args += ["--header", "Authorization: token #{ENV["HOMEBREW_GITHUB_API_TOKEN"]}"]
+    end
+    
+    curl_args << resolved_url
+    system_command!("curl", args: curl_args, env: { "HOMEBREW_CURL_RETRIES" => "3" })
+  end
+end
+
 class Stitch < Formula
   desc "Release management CLI for coordinated feature releases"
   homepage "https://github.com/leeovery/stitch"
+  url "https://api.github.com/repos/leeovery/stitch/tarball/v0.0.8", using: GitHubPrivateDownloadStrategy
   version "0.0.8"
+  sha256 "025d36570c6b7eb99090fa40f99505da82b95dd6c5bb0292298627feda829690"
   
   depends_on "git"
 
   def install
-    # Create a temporary directory
-    temp_dir = Dir.mktmpdir
-    
-    # Use git to clone the repository with SSH (bypasses keychain popups)
-    system "git", "clone", "git@github.com:leeovery/stitch.git", temp_dir
-    system "git", "-C", temp_dir, "checkout", "v#{version}"
-    
-    # Install files from the cloned repository
-    bin.install "#{temp_dir}/bin/stitch"
-    lib.install Dir["#{temp_dir}/lib/*"]
-    share.install "#{temp_dir}/templates"
-    
-    # Clean up
-    FileUtils.rm_rf(temp_dir)
+    bin.install "bin/stitch"
+    lib.install Dir["lib/*"]
+    share.install "templates"
   end
 
   def caveats

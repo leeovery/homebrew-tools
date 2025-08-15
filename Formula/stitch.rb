@@ -62,12 +62,12 @@ class Stitch < Formula
         stitch init --type=laravel
 
       Optional dependencies for full functionality:
+
         brew install gh          # GitHub CLI for build status
         brew install claude      # Claude AI for release notes
 
       For more information:
         stitch --help
-        https://github.com/leeovery/stitch#readme
     EOS
   end
 

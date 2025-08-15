@@ -1,7 +1,21 @@
+class GitHubPrivateDownloadStrategy < CurlDownloadStrategy
+  def _fetch(url:, resolved_url:, timeout:)
+    curl_args = ["--location", "--remote-time", "--output", temporary_path]
+    
+    # Add GitHub authentication for private repository access
+    if ENV["HOMEBREW_GITHUB_API_TOKEN"]
+      curl_args += ["--header", "Authorization: token #{ENV["HOMEBREW_GITHUB_API_TOKEN"]}"]
+    end
+    
+    curl_args << resolved_url
+    system_command!("curl", args: curl_args, env: { "HOMEBREW_CURL_RETRIES" => "3" })
+  end
+end
+
 class Stitch < Formula
   desc "Release management CLI for coordinated feature releases"
   homepage "https://github.com/leeovery/stitch"
-  url "https://api.github.com/repos/leeovery/stitch/tarball/v0.0.8"
+  url "https://github.com/leeovery/stitch/archive/v0.0.8.tar.gz", using: GitHubPrivateDownloadStrategy
   sha256 "025d36570c6b7eb99090fa40f99505da82b95dd6c5bb0292298627feda829690"
   version "0.0.8"
 

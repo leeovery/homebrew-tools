@@ -67,6 +67,7 @@ class Stitch < Formula
 
       For more information:
         stitch --help
+        https://github.com/leeovery/stitch#readme
     EOS
   end
 

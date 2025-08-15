@@ -1,24 +1,10 @@
-class GitHubPrivateDownloadStrategy < CurlDownloadStrategy
-  def _fetch(url:, resolved_url:, timeout:)
-    curl_args = ["--location", "--remote-time", "--output", temporary_path]
-    
-    # Add GitHub authentication for private repository access
-    if ENV["HOMEBREW_GITHUB_API_TOKEN"]
-      curl_args += ["--header", "Authorization: token #{ENV["HOMEBREW_GITHUB_API_TOKEN"]}"]
-    end
-    
-    curl_args << resolved_url
-    system_command!("curl", args: curl_args, env: { "HOMEBREW_CURL_RETRIES" => "3" })
-  end
-end
-
 class Stitch < Formula
   desc "Release management CLI for coordinated feature releases"
   homepage "https://github.com/leeovery/stitch"
-  url "https://api.github.com/repos/leeovery/stitch/tarball/v0.0.8", using: GitHubPrivateDownloadStrategy
+  url "https://api.github.com/repos/leeovery/stitch/tarball/v0.0.8"
+  sha256 "6073703fb28701fdd893083bb1c57c14b9a096fe344433c46028d018a23a42ad"
   version "0.0.8"
-  sha256 "025d36570c6b7eb99090fa40f99505da82b95dd6c5bb0292298627feda829690"
-  
+
   depends_on "git"
 
   def install
@@ -30,15 +16,15 @@ class Stitch < Formula
   def caveats
     <<~EOS
       Stitch has been installed!
-      
+
       To get started:
         cd your-project
         stitch init --type=laravel
-        
+
       Optional dependencies for full functionality:
         brew install gh          # GitHub CLI for build status
         brew install claude      # Claude AI for release notes
-        
+
       For more information:
         stitch --help
     EOS

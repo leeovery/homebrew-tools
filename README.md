@@ -4,10 +4,21 @@ This repository contains Homebrew formulas for leeovery tools.
 
 ## Installation
 
+**Authentication Required:** Since this is a private repository, you need a GitHub Personal Access Token.
+
 ```bash
+# 1. Create a GitHub Personal Access Token with 'repo' scope:
+#    https://github.com/settings/tokens
+
+# 2. Set the token:
+export HOMEBREW_GITHUB_API_TOKEN=your_token_here
+
+# 3. Install:
 brew tap leeovery/tools
 brew install stitch
 ```
+
+For detailed setup instructions, see [INSTALL.md](INSTALL.md).
 
 ## Available Formulas
 

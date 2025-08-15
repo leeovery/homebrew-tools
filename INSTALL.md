@@ -12,10 +12,8 @@ Since this is a **private repository**, you need GitHub authentication before in
 # 1. Create a GitHub Personal Access Token with 'repo' scope at:
 #    https://github.com/settings/tokens
 
-# 2. Set the token (choose one):
+# 2. Set the token:
 export HOMEBREW_GITHUB_API_TOKEN=your_token_here
-# OR
-export GITHUB_TOKEN=your_token_here
 
 # 3. Install Stitch CLI
 brew tap leeovery/tools

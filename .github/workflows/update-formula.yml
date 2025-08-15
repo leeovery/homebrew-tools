@@ -20,7 +20,7 @@ jobs:
           URL="${{ github.event.client_payload.url }}"
           
           # Update the formula with standard GitHub archive URL
-          ARCHIVE_URL="https://github.com/leeovery/stitch/archive/refs/tags/v$VERSION.tar.gz"
+          ARCHIVE_URL="https://github.com/leeovery/stitch/archive/v$VERSION.tar.gz"
           
           sed -i "s/version \".*\"/version \"$VERSION\"/" Formula/stitch.rb
           sed -i "s|url \".*\"|url \"$ARCHIVE_URL\"|" Formula/stitch.rb  

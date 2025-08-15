@@ -1,27 +1,16 @@
-class GitHubPrivateDownloadStrategy < CurlDownloadStrategy
-  def _fetch(url:, resolved_url:, timeout:)
-    curl_args = ["--location", "--remote-time", "--output", temporary_path]
-    
-    # Add GitHub authentication for private repository access
-    if ENV["HOMEBREW_GITHUB_API_TOKEN"]
-      curl_args += ["--header", "Authorization: token #{ENV["HOMEBREW_GITHUB_API_TOKEN"]}"]
-    end
-    
-    curl_args << resolved_url
-    system_command!("curl", args: curl_args, env: { "HOMEBREW_CURL_RETRIES" => "3" })
-  end
-end
-
 class Stitch < Formula
   desc "Release management CLI for coordinated feature releases"
   homepage "https://github.com/leeovery/stitch"
-  url "https://github.com/leeovery/stitch/releases/download/v0.0.9/stitch-v0.0.9.tar.gz", using: GitHubPrivateDownloadStrategy
-  sha256 "a8ac7d160aa7626fed7937ad7a5aca9de851767720063907d3eba9be0d0d4693"
   version "0.0.9"
 
   depends_on "git"
 
   def install
+    # Clone the repository directly using SSH (which we know works)
+    system "git", "clone", "git@github.com:leeovery/stitch.git", buildpath
+    system "git", "-C", buildpath, "checkout", "v#{version}"
+    
+    # Install the files
     bin.install "bin/stitch"
     lib.install Dir["lib/*"]
     share.install "templates"

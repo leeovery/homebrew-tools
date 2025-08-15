@@ -1,6 +1,7 @@
 class Stitch < Formula
   desc "Release management CLI for coordinated feature releases"
   homepage "https://github.com/leeovery/stitch"
+  url "https://github.com/leeovery/stitch.git", branch: "main"
   version "0.0.9"
 
   depends_on "git"

@@ -9,32 +9,32 @@ class GitHubPrivateRepositoryDownloadStrategy < CurlDownloadStrategy
         curl_args += ["--header", "Authorization: token #{ENV["HOMEBREW_GITHUB_API_TOKEN"]}"]
         curl_args += ["--header", "Accept: application/octet-stream"]
         curl_args << api_url
-        
+
         system_command!("curl", args: curl_args, env: { "HOMEBREW_CURL_RETRIES" => "3" })
         return
       end
     end
-    
+
     # Fallback to regular download
     super
   end
-  
+
   private
-  
+
   def get_asset_id(url)
     # Extract version from URL
     version_match = url.match(/\/v(\d+\.\d+\.\d+)\//)
     return nil unless version_match
-    
+
     version = version_match[1]
-    
+
     # Map versions to asset IDs (updated by automation)
     asset_ids = {
       "0.0.11" => "282839271",
       "0.0.10" => "282838303",
       "0.0.9" => "282831274"
     }
-    
+
     asset_ids[version]
   end
 end
@@ -56,6 +56,7 @@ class Stitch < Formula
 
   def caveats
     <<~EOS
+    ---------------------------------------------------------
       Stitch has been installed!
 
       To get started:
@@ -69,6 +70,7 @@ class Stitch < Formula
 
       For more information:
         stitch --help
+    ---------------------------------------------------------
     EOS
   end
 

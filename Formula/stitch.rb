@@ -1,26 +1,23 @@
+class GitHubPrivateDownloadStrategy < CurlDownloadStrategy
+  def _fetch(url:, resolved_url:, timeout:)
+    curl_args = ["--location", "--remote-time", "--output", temporary_path]
+    
+    # Add GitHub authentication
+    if ENV["HOMEBREW_GITHUB_API_TOKEN"]
+      curl_args += ["--header", "Authorization: token #{ENV["HOMEBREW_GITHUB_API_TOKEN"]}"]
+    end
+    
+    curl_args << resolved_url
+    system_command!("curl", args: curl_args, env: { "HOMEBREW_CURL_RETRIES" => "3" })
+  end
+end
+
 class Stitch < Formula
   desc "Release management CLI for coordinated feature releases"
   homepage "https://github.com/leeovery/stitch"
+  url "https://api.github.com/repos/leeovery/stitch/tarball/v0.0.8", using: GitHubPrivateDownloadStrategy
   version "0.0.8"
-  
-  url do
-    require "homebrew/api"
-    require "homebrew/github"
-    
-    # Use Homebrew's built-in GitHub credentials for private repo access
-    headers = {
-      "Authorization" => "bearer #{GitHub::API.credentials}",
-      "Accept" => "application/vnd.github.v3+json"
-    }
-    
-    release_data = GitHub.get_release("leeovery/stitch", "v#{version}")
-    tarball_url = release_data["tarball_url"]
-    
-    # Return the authenticated tarball URL
-    tarball_url
-  end
-  
-  sha256 :no_check  # Skip SHA verification for dynamic URLs
+  sha256 :no_check
   
   depends_on "git"
 

@@ -1,40 +1,19 @@
-class GitHubPrivateRepositoryReleaseDownloadStrategy < CurlDownloadStrategy
+class GitHubPrivateRepositoryDownloadStrategy < CurlDownloadStrategy
   def _fetch(url:, resolved_url:, timeout:)
-    # For release assets, we need to use the GitHub API with proper headers
-    if ENV["HOMEBREW_GITHUB_API_TOKEN"] && url.include?("/releases/download/")
-      # Convert release download URL to API URL
-      asset_url = url.gsub(%r{github\.com/([^/]+)/([^/]+)/releases/download/([^/]+)/(.+)}, 
-                          'api.github.com/repos/\1/\2/releases/tags/\3')
-      
-      # Get the asset ID from the release
-      release_response = `curl -s -H "Authorization: token #{ENV["HOMEBREW_GITHUB_API_TOKEN"]}" "#{asset_url}"`
-      require "json"
-      release_data = JSON.parse(release_response)
-      
-      asset_filename = File.basename(url)
-      asset = release_data["assets"]&.find { |a| a["name"] == asset_filename }
-      
-      if asset
-        # Download via API with proper headers
-        curl_args = ["--location", "--remote-time", "--output", temporary_path]
-        curl_args += ["--header", "Authorization: token #{ENV["HOMEBREW_GITHUB_API_TOKEN"]}"]
-        curl_args += ["--header", "Accept: application/octet-stream"]
-        curl_args << asset["url"]
-        
-        system_command!("curl", args: curl_args, env: { "HOMEBREW_CURL_RETRIES" => "3" })
-        return
-      end
+    curl_args = ["--location", "--remote-time", "--output", temporary_path]
+    
+    if ENV["HOMEBREW_GITHUB_API_TOKEN"]
+      curl_args += ["--header", "Authorization: token #{ENV["HOMEBREW_GITHUB_API_TOKEN"]}"]
     end
     
-    # Fallback to regular download
-    super
+    system_command!("curl", args: curl_args << url, env: { "HOMEBREW_CURL_RETRIES" => "3" })
   end
 end
 
 class Stitch < Formula
   desc "Release management CLI for coordinated feature releases"
   homepage "https://github.com/leeovery/stitch"
-  url "https://github.com/leeovery/stitch/releases/download/v0.0.9/stitch-v0.0.9.tar.gz", using: GitHubPrivateRepositoryReleaseDownloadStrategy
+  url "https://github.com/leeovery/stitch/releases/download/v0.0.9/stitch-v0.0.9.tar.gz", using: GitHubPrivateRepositoryDownloadStrategy
   sha256 "a8ac7d160aa7626fed7937ad7a5aca9de851767720063907d3eba9be0d0d4693"
   version "0.0.9"
 

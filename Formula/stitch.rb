@@ -9,8 +9,8 @@ class Stitch < Formula
     # Create a temporary directory
     temp_dir = Dir.mktmpdir
     
-    # Use git to clone the repository directly (uses existing SSH/token auth)
-    system "git", "clone", "https://github.com/leeovery/stitch.git", temp_dir
+    # Use git to clone the repository with SSH (bypasses keychain popups)
+    system "git", "clone", "git@github.com:leeovery/stitch.git", temp_dir
     system "git", "-C", temp_dir, "checkout", "v#{version}"
     
     # Install files from the cloned repository

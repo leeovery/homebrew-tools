@@ -6,26 +6,23 @@ Since this is a **private repository**, you need GitHub authentication before in
 
 ## Quick Installation
 
-### If you have GitHub CLI (Recommended):
-```bash
-gh auth login  # One-time setup
-brew tap leeovery/tools
-brew install stitch
-```
+**GitHub Personal Access Token Required:**
 
-### If you have a GitHub Personal Access Token:
 ```bash
-export GITHUB_TOKEN=your_token_here
-brew tap leeovery/tools
-brew install stitch
-```
+# 1. Create a GitHub Personal Access Token with 'repo' scope at:
+#    https://github.com/settings/tokens
 
-### Alternative with Homebrew-specific token:
-```bash
+# 2. Set the token (choose one):
 export HOMEBREW_GITHUB_API_TOKEN=your_token_here
+# OR
+export GITHUB_TOKEN=your_token_here
+
+# 3. Install Stitch CLI
 brew tap leeovery/tools
 brew install stitch
 ```
+
+**Important:** GitHub CLI (`gh auth login`) does NOT work with Homebrew - you must use environment variables.
 
 ## Requirements
 

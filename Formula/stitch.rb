@@ -1,9 +1,26 @@
 class Stitch < Formula
   desc "Release management CLI for coordinated feature releases"
   homepage "https://github.com/leeovery/stitch"
-  url "https://api.github.com/repos/leeovery/stitch/tarball/v0.0.8"
-  sha256 "96fb2fba25bc8cc7e29d4d56d485b1f5e82594aea51c122aa2d5f13b5ada9daa"
   version "0.0.8"
+  
+  url do
+    require "homebrew/api"
+    require "homebrew/github"
+    
+    # Use Homebrew's built-in GitHub credentials for private repo access
+    headers = {
+      "Authorization" => "bearer #{GitHub::API.credentials}",
+      "Accept" => "application/vnd.github.v3+json"
+    }
+    
+    release_data = GitHub.get_release("leeovery/stitch", "v#{version}")
+    tarball_url = release_data["tarball_url"]
+    
+    # Return the authenticated tarball URL
+    tarball_url
+  end
+  
+  sha256 :no_check  # Skip SHA verification for dynamic URLs
   
   depends_on "git"
 

@@ -17,7 +17,7 @@ class Stitch < Formula
   homepage "https://github.com/leeovery/stitch"
   url "https://api.github.com/repos/leeovery/stitch/tarball/v0.0.8", using: GitHubPrivateDownloadStrategy
   version "0.0.8"
-  sha256 :no_check
+  sha256 "025d36570c6b7eb99090fa40f99505da82b95dd6c5bb0292298627feda829690"
   
   depends_on "git"
 

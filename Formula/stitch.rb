@@ -1,8 +1,8 @@
 class Stitch < Formula
   desc "Release management CLI for coordinated feature releases"
   homepage "https://github.com/leeovery/stitch"
-  url "https://github.com/leeovery/stitch/releases/download/v0.0.8/stitch-v0.0.8.tar.gz"
-  sha256 "8d637f06e2e108ff8e8ef8367c759874fe5ee49f1cdc4a34cd9033b340713274"
+  url "https://api.github.com/repos/leeovery/stitch/tarball/v0.0.8"
+  sha256 "96fb2fba25bc8cc7e29d4d56d485b1f5e82594aea51c122aa2d5f13b5ada9daa"
   version "0.0.8"
   
   depends_on "git"

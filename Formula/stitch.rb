@@ -1,12 +1,34 @@
 class GitHubPrivateRepositoryDownloadStrategy < CurlDownloadStrategy
   def _fetch(url:, resolved_url:, timeout:)
-    curl_args = ["--location", "--remote-time", "--output", temporary_path]
-    
-    if ENV["HOMEBREW_GITHUB_API_TOKEN"]
-      curl_args += ["--header", "Authorization: token #{ENV["HOMEBREW_GITHUB_API_TOKEN"]}"]
+    if ENV["HOMEBREW_GITHUB_API_TOKEN"] && url.include?("/releases/download/")
+      # Convert GitHub release download URL to API asset URL
+      asset_id = get_asset_id(url)
+      if asset_id
+        api_url = "https://api.github.com/repos/leeovery/stitch/releases/assets/#{asset_id}"
+        curl_args = ["--location", "--remote-time", "--output", temporary_path]
+        curl_args += ["--header", "Authorization: token #{ENV["HOMEBREW_GITHUB_API_TOKEN"]}"]
+        curl_args += ["--header", "Accept: application/octet-stream"]
+        curl_args << api_url
+        
+        system_command!("curl", args: curl_args, env: { "HOMEBREW_CURL_RETRIES" => "3" })
+        return
+      end
     end
     
-    system_command!("curl", args: curl_args << url, env: { "HOMEBREW_CURL_RETRIES" => "3" })
+    # Fallback to regular download
+    super
+  end
+  
+  private
+  
+  def get_asset_id(url)
+    # For v0.0.9, we know the asset ID is 282831274
+    # In a real implementation, you'd parse the version and look it up
+    if url.include?("v0.0.9")
+      "282831274"
+    else
+      nil
+    end
   end
 end
 

@@ -22,13 +22,18 @@ class GitHubPrivateRepositoryDownloadStrategy < CurlDownloadStrategy
   private
   
   def get_asset_id(url)
-    # For v0.0.9, we know the asset ID is 282831274
-    # In a real implementation, you'd parse the version and look it up
-    if url.include?("v0.0.9")
-      "282831274"
-    else
-      nil
-    end
+    # Extract version from URL
+    version_match = url.match(/\/v(\d+\.\d+\.\d+)\//)
+    return nil unless version_match
+    
+    version = version_match[1]
+    
+    # Map versions to asset IDs (updated by automation)
+    asset_ids = {
+      "0.0.9" => "282831274"
+    }
+    
+    asset_ids[version]
   end
 end
 

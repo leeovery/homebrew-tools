@@ -17,6 +17,7 @@ jobs:
         run: |
           VERSION="${{ github.event.client_payload.version }}"
           SHA256="${{ github.event.client_payload.sha256 }}"
+          ASSET_ID="${{ github.event.client_payload.asset_id }}"
           URL="${{ github.event.client_payload.url }}"
           
           # Update the formula with release asset URL  
@@ -25,6 +26,16 @@ jobs:
           sed -i "s/version \".*\"/version \"$VERSION\"/" Formula/stitch.rb
           sed -i "s|url \".*\"|url \"$RELEASE_URL\"|" Formula/stitch.rb  
           sed -i "s/sha256 \".*\"/sha256 \"$SHA256\"/" Formula/stitch.rb
+          
+          # Update the asset ID in the download strategy
+          # Add or update the version-to-asset-id mapping
+          if grep -q "\"$VERSION\" =>" Formula/stitch.rb; then
+            # Update existing entry
+            sed -i "s/\"$VERSION\" => \"[^\"]*\"/\"$VERSION\" => \"$ASSET_ID\"/" Formula/stitch.rb
+          else
+            # Add new entry to the hash
+            sed -i "/asset_ids = {/a\\      \"$VERSION\" => \"$ASSET_ID\"," Formula/stitch.rb
+          fi
 
       - name: Commit changes
         run: |

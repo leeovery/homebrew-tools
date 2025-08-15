@@ -19,11 +19,11 @@ jobs:
           SHA256="${{ github.event.client_payload.sha256 }}"
           URL="${{ github.event.client_payload.url }}"
           
-          # Update the formula with API tarball URL
-          API_URL="https://api.github.com/repos/leeovery/stitch/tarball/v$VERSION"
+          # Update the formula with standard GitHub archive URL
+          ARCHIVE_URL="https://github.com/leeovery/stitch/archive/refs/tags/v$VERSION.tar.gz"
           
           sed -i "s/version \".*\"/version \"$VERSION\"/" Formula/stitch.rb
-          sed -i "s|url \".*\"|url \"$API_URL\"|" Formula/stitch.rb  
+          sed -i "s|url \".*\"|url \"$ARCHIVE_URL\"|" Formula/stitch.rb  
           sed -i "s/sha256 \".*\"/sha256 \"$SHA256\"/" Formula/stitch.rb
 
       - name: Commit changes

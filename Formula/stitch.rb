@@ -1,19 +1,28 @@
+class GitHubPrivateDownloadStrategy < CurlDownloadStrategy
+  def _fetch(url:, resolved_url:, timeout:)
+    curl_args = ["--location", "--remote-time", "--output", temporary_path]
+    
+    # Add GitHub authentication and proper headers for tarball download
+    if ENV["HOMEBREW_GITHUB_API_TOKEN"]
+      curl_args += ["--header", "Authorization: token #{ENV["HOMEBREW_GITHUB_API_TOKEN"]}"]
+      curl_args += ["--header", "Accept: application/vnd.github.v3.raw"]
+    end
+    
+    curl_args << resolved_url
+    system_command!("curl", args: curl_args, env: { "HOMEBREW_CURL_RETRIES" => "3" })
+  end
+end
+
 class Stitch < Formula
   desc "Release management CLI for coordinated feature releases"
   homepage "https://github.com/leeovery/stitch"
+  url "https://api.github.com/repos/leeovery/stitch/tarball/v0.0.8", using: GitHubPrivateDownloadStrategy
   version "0.0.8"
-  
-  # No URL needed - we'll clone directly in install method
-  
-  depends_on "gh"
+  sha256 :no_check
   
   depends_on "git"
 
   def install
-    # Clone the repository using gh CLI (handles private repo authentication)
-    system "gh", "repo", "clone", "leeovery/stitch", ".", "--", "--branch", "v#{version}"
-    
-    # Install the files
     bin.install "bin/stitch"
     lib.install Dir["lib/*"]
     share.install "templates"

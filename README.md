@@ -62,12 +62,23 @@ brew install bash-toolkit
 **Getting Started:**
 ```bash
 #!/usr/bin/env bash
-source $(bash-toolkit common message layout)
+# Load the full library
+source "$(bash-toolkit)"
 
-title "My Script"
+title "My Script" 
 message "Processing files..." "info"
 step "Step 1 complete"
 message "All done!" "success"
+```
+
+**Individual Module Loading:**
+```bash
+#!/usr/bin/env bash
+# Load only what you need
+source "$(bash-toolkit message)"
+source "$(bash-toolkit layout)"
+
+message "Just messaging and layout functions" "info"
 ```
 
 ## Development

@@ -50,6 +50,7 @@ class Stitch < Formula
   version "0.0.14"
 
   depends_on "git"
+  depends_on "bash-toolkit"
 
   def install
     bin.install "bin/stitch"

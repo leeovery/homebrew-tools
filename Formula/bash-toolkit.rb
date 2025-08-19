@@ -30,7 +30,7 @@ class GitHubPrivateRepositoryDownloadStrategy < CurlDownloadStrategy
 
     # Map versions to asset IDs (updated by automation)
     asset_ids = {
-      "2.0.0" => "placeholder"
+      "0.0.1" => "placeholder"
     }
 
     asset_ids[version]
@@ -40,13 +40,18 @@ end
 class BashToolkit < Formula
   desc "A modular bash library for terminal messaging, formatting, and user interaction"
   homepage "https://github.com/leeovery/bash-toolkit"
-  url "https://github.com/leeovery/bash-toolkit/releases/download/v2.0.0/bash-toolkit-v2.0.0.tar.gz", using: GitHubPrivateRepositoryDownloadStrategy
+  url "https://github.com/leeovery/bash-toolkit/releases/download/v0.0.1/bash-toolkit-v0.0.1.tar.gz", using: GitHubPrivateRepositoryDownloadStrategy
   sha256 "placeholder"
-  version "2.0.0"
+  version "0.0.1"
 
   def install
+    # Install path helper binary
     bin.install "bin/bash-toolkit"
+    
+    # Install library modules
     lib.install Dir["lib/*"]
+    
+    # Install examples as documentation
     share.install "examples"
   end
 
@@ -55,23 +60,40 @@ class BashToolkit < Formula
     ---------------------------------------------------------
       Bash Toolkit has been installed!
 
-      To get started:
-        source $(bash-toolkit common)
+      To get started, source the main library:
+        source $(bash-toolkit)
         message "Hello, World!" "success"
 
-      Available modules:
-        • common   - Core color and styling utilities
-        • message  - Unified text output with semantic types
-        • layout   - Layout functions with automatic indentation
-        • prompt   - User interaction and input functions
+      Or load individual modules:
+        source $(bash-toolkit message)
+        source $(bash-toolkit layout)
+        source $(bash-toolkit prompt)
+        source $(bash-toolkit execution)
 
-      For more information:
-        bash-toolkit --help
+      Direct paths also work:
+        source #{lib}/bash-toolkit.sh
+
+      View examples:
+        ls #{share}/examples/
+        #{share}/examples/message-demo.sh
+
+      Documentation: #{share}/examples/
     ---------------------------------------------------------
     EOS
   end
 
   test do
-    system "#{bin}/bash-toolkit", "--help"
+    # Test that files exist
+    assert_predicate bin/"bash-toolkit", :exist?
+    assert_predicate lib/"bash-toolkit.sh", :exist?
+    assert_predicate lib/"message.sh", :exist?
+    assert_predicate share/"examples", :exist?
+    
+    # Test path helper works
+    output = shell_output("#{bin}/bash-toolkit")
+    assert_equal "#{lib}/bash-toolkit.sh\n", output
+    
+    # Test basic library loading
+    system "/bin/bash", "-c", "source $(#{bin}/bash-toolkit) && declare -F message > /dev/null"
   end
 end

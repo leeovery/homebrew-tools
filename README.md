@@ -1,10 +1,10 @@
 # leeovery Homebrew Tools
 
-This repository contains Homebrew formulas for leeovery tools.
+This repository contains Homebrew formulas for leeovery developer tools.
 
 ## Installation
 
-**Authentication Required:** Since this is a private repository, you need a GitHub Personal Access Token.
+**Authentication Required:** Since these are private repositories, you need a GitHub Personal Access Token.
 
 ```bash
 # 1. Create a GitHub Personal Access Token with 'repo' scope:
@@ -13,9 +13,12 @@ This repository contains Homebrew formulas for leeovery tools.
 # 2. Set the token:
 export HOMEBREW_GITHUB_API_TOKEN=your_token_here
 
-# 3. Install:
+# 3. Add the tap:
 brew tap leeovery/tools
-brew install stitch
+
+# 4. Install the tools you need:
+brew install stitch          # Release management CLI
+brew install bash-toolkit    # Bash messaging library
 ```
 
 For detailed setup instructions, see [INSTALL.md](INSTALL.md).
@@ -40,6 +43,31 @@ brew install stitch
 cd your-laravel-project
 stitch init --type=laravel
 stitch feature start my-feature
+```
+
+### Bash Toolkit
+A modular bash library for terminal messaging, formatting, and user interaction.
+
+```bash
+brew install bash-toolkit
+```
+
+**Features:**
+- Unified `message()` function with semantic types (success, info, warning, error)
+- Smart color/styling with Tailwind-inspired naming (text-red, bg-blue, etc.)
+- Layout functions with automatic indentation
+- User interaction and prompting utilities
+- Smart terminal capability detection (tput/ANSI fallback)
+
+**Getting Started:**
+```bash
+#!/usr/bin/env bash
+source $(bash-toolkit common message layout)
+
+title "My Script"
+message "Processing files..." "info"
+step "Step 1 complete"
+message "All done!" "success"
 ```
 
 ## Development

@@ -1,8 +1,8 @@
-# Installing Stitch CLI
+# Installing Personal Tools
 
 ## Prerequisites
 
-Since this is a **private repository**, you need GitHub authentication before installing.
+Since these are **private repositories**, you need GitHub authentication before installing.
 
 ## Quick Installation
 
@@ -15,9 +15,12 @@ Since this is a **private repository**, you need GitHub authentication before in
 # 2. Set the token:
 export HOMEBREW_GITHUB_API_TOKEN=your_token_here
 
-# 3. Install Stitch CLI
+# 3. Add the tap:
 brew tap leeovery/tools
-brew install stitch
+
+# 4. Install the tool you need:
+brew install stitch          # Release management CLI
+brew install bash-toolkit    # Bash messaging library
 ```
 
 **Important:** GitHub CLI (`gh auth login`) does NOT work with Homebrew - you must use environment variables.
@@ -30,18 +33,37 @@ brew install stitch
 
 ## Verification
 
-After installation, verify it works:
+### Stitch CLI
 ```bash
 stitch --version
 stitch --help
 ```
 
+### Bash Toolkit
+```bash
+bash-toolkit --help
+source $(bash-toolkit common)
+message "Hello, World!" "success"
+```
+
 ## Getting Started
 
+### Stitch CLI (Release Management)
 ```bash
 cd your-laravel-project
 stitch init --type=laravel
 stitch feature start my-feature
+```
+
+### Bash Toolkit (Library Usage)
+```bash
+#!/usr/bin/env bash
+source $(bash-toolkit common message layout)
+
+title "My Script"
+message "Processing..." "info"
+step "Step 1 complete"
+message "Done!" "success"
 ```
 
 ## Troubleshooting

@@ -30,6 +30,7 @@ class GitHubPrivateRepositoryDownloadStrategy < CurlDownloadStrategy
 
     # Map versions to asset IDs (updated by automation)
     asset_ids = {
+      "1.2.5" => "318868629",
       "1.2.4" => "318859491",
       "1.2.3" => "318825050",
       "1.2.2" => "318822741",
@@ -69,9 +70,9 @@ end
 class Stitch < Formula
   desc "Release management CLI for coordinated feature releases"
   homepage "https://github.com/leeovery/stitch"
-  url "https://github.com/leeovery/stitch/releases/download/v1.2.4/stitch-v1.2.4.tar.gz", using: GitHubPrivateRepositoryDownloadStrategy
-  sha256 "41ddcf0f9a7acdc64c062c8a1d7075efb8c0fb97f73be8a5bcdaaabb293e94a5"
-  version "1.2.4"
+  url "https://github.com/leeovery/stitch/releases/download/v1.2.5/stitch-v1.2.5.tar.gz", using: GitHubPrivateRepositoryDownloadStrategy
+  sha256 "ac447daa8e74dc47d867060cee54e38135132775a100769f497337569317bbc3"
+  version "1.2.5"
 
   depends_on "git"
   depends_on "bash-toolkit"

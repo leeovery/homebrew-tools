@@ -95,15 +95,14 @@ class Stitch < Formula
 
       To get started:
         cd your-project
-        stitch init --type=laravel
+        stitch init
 
       Optional dependencies for full functionality:
 
-        brew install gh          # GitHub CLI for build status
         brew install claude      # Claude AI for release notes
 
       For more information:
-        stitch --help
+        stitch help
     ---------------------------------------------------------
     EOS
   end

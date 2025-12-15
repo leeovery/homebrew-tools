@@ -4,7 +4,7 @@ This file provides comprehensive context to Claude Code when working with the le
 
 ## Repository Overview
 
-**Homebrew Tools** is a private Homebrew tap containing formulas for leeovery developer tools. It provides automated formula updates via GitHub Actions when new releases are published in the source repositories.
+**Homebrew Tools** is a private Homebrew tap containing formulas for personal CLI tools. It provides automated formula updates via GitHub Actions when new releases are published in the source repositories.
 
 ## Available Tools
 
@@ -81,7 +81,7 @@ brew install leeovery/tools/[tool-name]
 
 ### For Users
 - GitHub Personal Access Token with 'repo' scope
-- Access to leeovery organization
+- Access to leeovery repositories
 - Token set as `HOMEBREW_GITHUB_API_TOKEN` environment variable
 
 ### For Automation

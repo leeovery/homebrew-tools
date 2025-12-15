@@ -11,7 +11,7 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
         with:
-          token: ${{ secrets.CICD_PAT_2 }}
+          token: ${{ secrets.CICD_PAT }}
 
       - name: Update Formula
         run: |

@@ -30,6 +30,7 @@ class GitHubPrivateRepositoryDownloadStrategy < CurlDownloadStrategy
 
     # Map versions to asset IDs (updated by automation)
     asset_ids = {
+      "1.1.4" => "330292603",
       "1.1.3" => "328978571",
       "1.1.1" => "328880936",
       "1.1.0" => "327421524",
@@ -86,9 +87,9 @@ end
 class BashToolkit < Formula
   desc "A modular bash library for terminal messaging, formatting, and user interaction"
   homepage "https://github.com/leeovery/bash-toolkit"
-  url "https://github.com/leeovery/bash-toolkit/releases/download/v1.1.3/bash-toolkit-v1.1.3.tar.gz", using: GitHubPrivateRepositoryDownloadStrategy
-  sha256 "2e36fef11d475eb661e7adffacdbe2dae1d7ce7ab1804a98c2c667eef5e93c0f"
-  version "1.1.3"
+  url "https://github.com/leeovery/bash-toolkit/releases/download/v1.1.4/bash-toolkit-v1.1.4.tar.gz", using: GitHubPrivateRepositoryDownloadStrategy
+  sha256 "ad6f7727d66a4f40e1e250a2b178041d660ef4e4ca8da372d2bcaaf4acbdb755"
+  version "1.1.4"
 
   def install
     # Install path helper binary

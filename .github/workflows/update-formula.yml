@@ -16,59 +16,81 @@ jobs:
       - name: Update Formula
         run: |
           VERSION="${{ github.event.client_payload.version }}"
-          SHA256="${{ github.event.client_payload.sha256 }}"
-          ASSET_ID="${{ github.event.client_payload.asset_id }}"
-          URL="${{ github.event.client_payload.url }}"
           TOOL="${{ github.event.client_payload.tool }}"
-          
+
           # Validate tool parameter
           if [ -z "$TOOL" ]; then
             echo "Error: tool parameter is required"
             exit 1
           fi
-          
+
           # Set formula file and repository based on tool
           if [ "$TOOL" = "bash-toolkit" ]; then
             FORMULA_FILE="Formula/bash-toolkit.rb"
             REPO="leeovery/bash-toolkit"
+            SHA256="${{ github.event.client_payload.sha256 }}"
+            ASSET_ID="${{ github.event.client_payload.asset_id }}"
+
+            RELEASE_URL="https://github.com/$REPO/releases/download/v$VERSION/$TOOL-v$VERSION.tar.gz"
+
+            sed -i "s/version \".*\"/version \"$VERSION\"/" $FORMULA_FILE
+            sed -i "s|url \".*\"|url \"$RELEASE_URL\"|" $FORMULA_FILE
+            sed -i "s/sha256 \".*\"/sha256 \"$SHA256\"/" $FORMULA_FILE
+
+            if grep -q "\"$VERSION\" =>" $FORMULA_FILE; then
+              sed -i "s/\"$VERSION\" => \"[^\"]*\"/\"$VERSION\" => \"$ASSET_ID\"/" $FORMULA_FILE
+            else
+              sed -i "/asset_ids = {/a\\      \"$VERSION\" => \"$ASSET_ID\"," $FORMULA_FILE
+            fi
           elif [ "$TOOL" = "stitch" ]; then
-            FORMULA_FILE="Formula/stitch.rb" 
+            FORMULA_FILE="Formula/stitch.rb"
             REPO="leeovery/stitch"
+            SHA256="${{ github.event.client_payload.sha256 }}"
+            ASSET_ID="${{ github.event.client_payload.asset_id }}"
+
+            RELEASE_URL="https://github.com/$REPO/releases/download/v$VERSION/$TOOL-v$VERSION.tar.gz"
+
+            sed -i "s/version \".*\"/version \"$VERSION\"/" $FORMULA_FILE
+            sed -i "s|url \".*\"|url \"$RELEASE_URL\"|" $FORMULA_FILE
+            sed -i "s/sha256 \".*\"/sha256 \"$SHA256\"/" $FORMULA_FILE
+
+            if grep -q "\"$VERSION\" =>" $FORMULA_FILE; then
+              sed -i "s/\"$VERSION\" => \"[^\"]*\"/\"$VERSION\" => \"$ASSET_ID\"/" $FORMULA_FILE
+            else
+              sed -i "/asset_ids = {/a\\      \"$VERSION\" => \"$ASSET_ID\"," $FORMULA_FILE
+            fi
+          elif [ "$TOOL" = "tick" ]; then
+            FORMULA_FILE="Formula/tick.rb"
+            SHA256_ARM64="${{ github.event.client_payload.sha256_arm64 }}"
+            SHA256_AMD64="${{ github.event.client_payload.sha256_amd64 }}"
+
+            sed -i "s/version \".*\"/version \"$VERSION\"/" $FORMULA_FILE
+
+            # Update arm64 sha256
+            sed -i "/darwin_arm64/{ n; s/sha256 \".*\"/sha256 \"$SHA256_ARM64\"/; }" $FORMULA_FILE
+
+            # Update amd64 sha256
+            sed -i "/darwin_amd64/{ n; s/sha256 \".*\"/sha256 \"$SHA256_AMD64\"/; }" $FORMULA_FILE
           else
-            echo "Error: unsupported tool '$TOOL'. Supported tools: stitch, bash-toolkit"
+            echo "Error: unsupported tool '$TOOL'. Supported tools: stitch, bash-toolkit, tick"
             exit 1
-          fi
-          
-          # Update the formula with release asset URL  
-          RELEASE_URL="https://github.com/$REPO/releases/download/v$VERSION/$TOOL-v$VERSION.tar.gz"
-          
-          sed -i "s/version \".*\"/version \"$VERSION\"/" $FORMULA_FILE
-          sed -i "s|url \".*\"|url \"$RELEASE_URL\"|" $FORMULA_FILE
-          sed -i "s/sha256 \".*\"/sha256 \"$SHA256\"/" $FORMULA_FILE
-          
-          # Update the asset ID in the download strategy
-          # Add or update the version-to-asset-id mapping
-          if grep -q "\"$VERSION\" =>" $FORMULA_FILE; then
-            # Update existing entry
-            sed -i "s/\"$VERSION\" => \"[^\"]*\"/\"$VERSION\" => \"$ASSET_ID\"/" $FORMULA_FILE
-          else
-            # Add new entry to the hash
-            sed -i "/asset_ids = {/a\\      \"$VERSION\" => \"$ASSET_ID\"," $FORMULA_FILE
           fi
 
       - name: Commit changes
         run: |
           TOOL="${{ github.event.client_payload.tool }}"
           VERSION="${{ github.event.client_payload.version }}"
-          
+
           git config --local user.email "action@github.com"
           git config --local user.name "GitHub Action"
-          
+
           if [ "$TOOL" = "bash-toolkit" ]; then
             git add Formula/bash-toolkit.rb
           elif [ "$TOOL" = "stitch" ]; then
             git add Formula/stitch.rb
+          elif [ "$TOOL" = "tick" ]; then
+            git add Formula/tick.rb
           fi
-          
+
           git commit -m "Update $TOOL formula to v$VERSION" || exit 0
           git push

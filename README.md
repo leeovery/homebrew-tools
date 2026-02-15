@@ -4,30 +4,30 @@ Homebrew tap for personal CLI tools.
 
 ## Installation
 
-**Authentication Required:** Private repositories require a GitHub Personal Access Token.
-
 ```bash
-# 1. Create a GitHub Personal Access Token with 'repo' scope:
-#    https://github.com/settings/tokens
+# Public tools (no token required):
+brew install leeovery/tools/tick
 
-# 2. Set the token:
+# Private tools require a GitHub Personal Access Token with 'repo' scope:
+#   https://github.com/settings/tokens
 export HOMEBREW_GITHUB_API_TOKEN=your_token_here
 
-# 3. Install:
 brew install leeovery/tools/stitch
 brew install leeovery/tools/bash-toolkit
 ```
 
 ## Available Formulas
 
-| Formula | Description | Repository |
-|---------|-------------|------------|
-| `stitch` | Multi-strategy release management CLI | [leeovery/stitch](https://github.com/leeovery/stitch) |
-| `bash-toolkit` | Bash library for terminal messaging and UI | [leeovery/bash-toolkit](https://github.com/leeovery/bash-toolkit) |
+| Formula | Description | Repository | Auth Required |
+|---------|-------------|------------|---------------|
+| `tick` | Priority-based task scheduling CLI | [leeovery/tick](https://github.com/leeovery/tick) | No (public) |
+| `stitch` | Multi-strategy release management CLI | [leeovery/stitch](https://github.com/leeovery/stitch) | Yes |
+| `bash-toolkit` | Bash library for terminal messaging and UI | [leeovery/bash-toolkit](https://github.com/leeovery/bash-toolkit) | Yes |
 
 ## Updating
 
 ```bash
+brew upgrade tick
 brew upgrade stitch
 brew upgrade bash-toolkit
 ```

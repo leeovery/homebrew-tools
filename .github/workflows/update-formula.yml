@@ -71,8 +71,20 @@ jobs:
 
             # Update amd64 sha256
             sed -i "/darwin_amd64/{ n; s/sha256 \".*\"/sha256 \"$SHA256_AMD64\"/; }" $FORMULA_FILE
+          elif [ "$TOOL" = "portal" ]; then
+            FORMULA_FILE="Formula/portal.rb"
+            SHA256_ARM64="${{ github.event.client_payload.sha256_arm64 }}"
+            SHA256_AMD64="${{ github.event.client_payload.sha256_amd64 }}"
+
+            sed -i "s/version \".*\"/version \"$VERSION\"/" $FORMULA_FILE
+
+            # Update arm64 sha256
+            sed -i "/darwin_arm64/{ n; s/sha256 \".*\"/sha256 \"$SHA256_ARM64\"/; }" $FORMULA_FILE
+
+            # Update amd64 sha256
+            sed -i "/darwin_amd64/{ n; s/sha256 \".*\"/sha256 \"$SHA256_AMD64\"/; }" $FORMULA_FILE
           else
-            echo "Error: unsupported tool '$TOOL'. Supported tools: stitch, bash-toolkit, tick"
+            echo "Error: unsupported tool '$TOOL'. Supported tools: stitch, bash-toolkit, tick, portal"
             exit 1
           fi
 
@@ -90,6 +102,8 @@ jobs:
             git add Formula/stitch.rb
           elif [ "$TOOL" = "tick" ]; then
             git add Formula/tick.rb
+          elif [ "$TOOL" = "portal" ]; then
+            git add Formula/portal.rb
           fi
 
           git commit -m "Update $TOOL formula to v$VERSION" || exit 0

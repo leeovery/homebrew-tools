@@ -1,16 +1,16 @@
 class Tick < Formula
   desc "Priority-based task scheduling CLI"
   homepage "https://github.com/leeovery/tick"
-  version "0.2.4"
+  version "0.2.5"
   license "MIT"
 
   on_macos do
     if Hardware::CPU.arm?
       url "https://github.com/leeovery/tick/releases/download/v#{version}/tick_#{version}_darwin_arm64.tar.gz"
-      sha256 "4412659b97ac011ffef9a8b501fcdfeded5742f838350741ca6bfb37dd003735"
+      sha256 "7827684764991b1234edca5d721e7e52209be8d62b796ee38cc94e80ecf67458"
     elsif Hardware::CPU.intel?
       url "https://github.com/leeovery/tick/releases/download/v#{version}/tick_#{version}_darwin_amd64.tar.gz"
-      sha256 "eca70bb65b88884964c73938ed315027919685cb6787b868f45bf7733b524ca9"
+      sha256 "1e196123e177afd4ddb8d5c96a6210eae3f6ead8e57b67bb5bc2722826ba9e2a"
     end
   end
 

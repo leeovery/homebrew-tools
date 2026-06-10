@@ -18,6 +18,20 @@ class Portal < Formula
     bin.install "portal"
   end
 
+  def caveats
+    <<~EOS
+      To activate shell integration, add to your ~/.zshrc:
+
+        eval "$(portal init zsh)"
+
+      For bash: eval "$(portal init bash)"
+      For fish: portal init fish | source
+
+      This creates x() and xctl() shell functions.
+      Customize with: eval "$(portal init zsh --cmd p)"
+    EOS
+  end
+
   test do
     assert_match "portal", shell_output("#{bin}/portal version")
   end

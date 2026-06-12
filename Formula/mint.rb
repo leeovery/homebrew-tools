@@ -2,6 +2,7 @@ class Mint < Formula
   desc "AI-minted releases and commits"
   homepage "https://github.com/leeovery/mint"
   version "0.0.0"
+  license "MIT"
 
   on_macos do
     if Hardware::CPU.arm?

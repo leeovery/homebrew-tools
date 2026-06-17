@@ -1,16 +1,16 @@
 class Mint < Formula
   desc "AI-minted releases and commits"
   homepage "https://github.com/leeovery/mint"
-  version "0.0.9"
+  version "0.0.10"
   license "MIT"
 
   on_macos do
     if Hardware::CPU.arm?
       url "https://github.com/leeovery/mint/releases/download/v#{version}/mint_#{version}_darwin_arm64.tar.gz"
-      sha256 "d030b7a6b6b963838a9c79b761906c919db796cc0f1c4e90bea88ec6c2b7a3d5"
+      sha256 "af99a713bbee43889107ff3acd9e329ec76fc22e76c4baf7cb8845f2f5442361"
     elsif Hardware::CPU.intel?
       url "https://github.com/leeovery/mint/releases/download/v#{version}/mint_#{version}_darwin_amd64.tar.gz"
-      sha256 "1eb455c530b7ab8236d442cca6bd40c70ea97c067cb8145881b5b0650a52ef64"
+      sha256 "1646631bafd85bd802dfad00bc7f99372969035e21855f82ddfe8d0efc2b7bac"
     end
   end
 

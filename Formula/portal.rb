@@ -1,16 +1,16 @@
 class Portal < Formula
   desc "Interactive session picker for tmux and Zellij"
   homepage "https://github.com/leeovery/portal"
-  version "0.9.2"
+  version "0.10.0"
   license "MIT"
 
   on_macos do
     if Hardware::CPU.arm?
       url "https://github.com/leeovery/portal/releases/download/v#{version}/portal_#{version}_darwin_arm64.tar.gz"
-      sha256 "99bce3a8389eaedb576f7444660b5b941ec725bb8e61f33c46ce066223809915"
+      sha256 "462b1dd5520ea09e53f9bb5dfe9a48b15d13a72f579371eeebc5705a7cc6ad41"
     elsif Hardware::CPU.intel?
       url "https://github.com/leeovery/portal/releases/download/v#{version}/portal_#{version}_darwin_amd64.tar.gz"
-      sha256 "e3d4afb2ea35f8f18404674034c0b83c65996c9474d2e7071e8260b3921a15a0"
+      sha256 "ae1c8d3cb3c43a21c267295c43ccb52fc5f023e12d0a0583baefda4566332d39"
     end
   end
 

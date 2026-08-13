@@ -7,11 +7,14 @@ on:
 jobs:
   update:
     runs-on: ubuntu-latest
+    # Pushing the formula commit back to this repo needs write access, which the
+    # built-in GITHUB_TOKEN grants once asked. This repo is the dispatch target,
+    # not a sender, so it no longer holds a cross-repo PAT of its own.
+    permissions:
+      contents: write
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-        with:
-          token: ${{ secrets.CICD_PAT }}
 
       - name: Update Formula
         run: |

@@ -20,14 +20,13 @@ class Switchboard < Formula
 
   def caveats
     <<~EOS
-      Describe your accounts in ~/.config/switchboard/config.toml, then run the
-      router in the background, loading the account tokens from a file:
+      To set switchboard up, run:
 
-        switchboard service install --env-file ~/.tokens.env
+        switchboard setup
 
-      To start Claude Code through it, add to your ~/.zshrc:
-
-        eval "$(switchboard init zsh)"
+      It walks through your accounts and their tokens, priming, the service
+      that keeps the router running, the claude link (with the one line to add
+      to your shell's startup file) and the Claude Code skill.
     EOS
   end
 

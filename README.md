@@ -8,6 +8,7 @@ Homebrew tap for personal CLI tools.
 # Public tools (no token required):
 brew install leeovery/tools/tick
 brew install leeovery/tools/portal
+brew install leeovery/tools/switchboard
 
 # Private tools require a GitHub Personal Access Token with 'repo' scope:
 #   https://github.com/settings/tokens
@@ -23,6 +24,7 @@ brew install leeovery/tools/bash-toolkit
 |---------|-------------|------------|---------------|
 | `tick` | Priority-based task scheduling CLI | [leeovery/tick](https://github.com/leeovery/tick) | No (public) |
 | `portal` | Interactive session picker for tmux | [leeovery/portal](https://github.com/leeovery/portal) | No (public) |
+| `switchboard` | Spread Claude Code sessions across several Claude subscriptions | [leeovery/switchboard](https://github.com/leeovery/switchboard) | No (public) |
 | `stitch` | Multi-strategy release management CLI | [leeovery/stitch](https://github.com/leeovery/stitch) | Yes |
 | `bash-toolkit` | Bash library for terminal messaging and UI | [leeovery/bash-toolkit](https://github.com/leeovery/bash-toolkit) | Yes |
 
@@ -31,6 +33,7 @@ brew install leeovery/tools/bash-toolkit
 ```bash
 brew upgrade tick
 brew upgrade portal
+brew upgrade switchboard
 brew upgrade stitch
 brew upgrade bash-toolkit
 ```

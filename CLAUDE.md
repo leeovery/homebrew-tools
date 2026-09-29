@@ -18,6 +18,10 @@ This file provides comprehensive context to Claude Code when working with the le
 - Interactive session picker for tmux (Go, dual-arch macOS binaries)
 - `brew install leeovery/tools/portal`
 
+**Switchboard** (`Formula/switchboard.rb`)
+- Spreads Claude Code sessions across several Claude subscriptions (Go, dual-arch macOS binaries)
+- `brew install leeovery/tools/switchboard`
+
 ### Private (requires `HOMEBREW_GITHUB_API_TOKEN`)
 
 **Stitch** (`Formula/stitch.rb`)

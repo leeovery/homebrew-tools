@@ -98,8 +98,20 @@ jobs:
 
             # Update amd64 sha256
             sed -i "/darwin_amd64/{ n; s/sha256 \".*\"/sha256 \"$SHA256_AMD64\"/; }" $FORMULA_FILE
+          elif [ "$TOOL" = "switchboard" ]; then
+            FORMULA_FILE="Formula/switchboard.rb"
+            SHA256_ARM64="${{ github.event.client_payload.sha256_arm64 }}"
+            SHA256_AMD64="${{ github.event.client_payload.sha256_amd64 }}"
+
+            sed -i "s/version \".*\"/version \"$VERSION\"/" $FORMULA_FILE
+
+            # Update arm64 sha256
+            sed -i "/darwin_arm64/{ n; s/sha256 \".*\"/sha256 \"$SHA256_ARM64\"/; }" $FORMULA_FILE
+
+            # Update amd64 sha256
+            sed -i "/darwin_amd64/{ n; s/sha256 \".*\"/sha256 \"$SHA256_AMD64\"/; }" $FORMULA_FILE
           else
-            echo "Error: unsupported tool '$TOOL'. Supported tools: stitch, bash-toolkit, tick, portal, mint"
+            echo "Error: unsupported tool '$TOOL'. Supported tools: stitch, bash-toolkit, tick, portal, mint, switchboard"
             exit 1
           fi
 
@@ -121,6 +133,8 @@ jobs:
             git add Formula/portal.rb
           elif [ "$TOOL" = "mint" ]; then
             git add Formula/mint.rb
+          elif [ "$TOOL" = "switchboard" ]; then
+            git add Formula/switchboard.rb
           fi
 
           git commit -m "Update $TOOL formula to v$VERSION" || exit 0

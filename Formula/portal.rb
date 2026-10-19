@@ -4,14 +4,15 @@ class Portal < Formula
   version "0.12.2"
   license "MIT"
 
-  on_macos do
-    if Hardware::CPU.arm?
-      url "https://github.com/leeovery/portal/releases/download/v#{version}/portal_#{version}_darwin_arm64.tar.gz"
-      sha256 "9bee90b1b10ec65fcc9cc0ea6621971eff623702ca29ec3695c96b87a5c977f6"
-    elsif Hardware::CPU.intel?
-      url "https://github.com/leeovery/portal/releases/download/v#{version}/portal_#{version}_darwin_amd64.tar.gz"
-      sha256 "53d2f63b34ec92adfb56b125d4bc167f59cf2c6e95f139ab6fcfe6711cc52a53"
-    end
+  depends_on :macos
+
+  on_arm do
+    url "https://github.com/leeovery/portal/releases/download/v#{version}/portal_#{version}_darwin_arm64.tar.gz"
+    sha256 "9bee90b1b10ec65fcc9cc0ea6621971eff623702ca29ec3695c96b87a5c977f6"
+  end
+  on_intel do
+    url "https://github.com/leeovery/portal/releases/download/v#{version}/portal_#{version}_darwin_amd64.tar.gz"
+    sha256 "53d2f63b34ec92adfb56b125d4bc167f59cf2c6e95f139ab6fcfe6711cc52a53"
   end
 
   def install

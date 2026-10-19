@@ -37,7 +37,7 @@ This file provides comprehensive context to Claude Code when working with the le
 ### Formula Structure
 Two patterns exist:
 
-**Public tools (tick, portal):** Standard Homebrew formulas with dual-arch macOS support (`on_macos` block with `Hardware::CPU.arm?` / `intel?` branches). Each arch has its own URL and sha256. Updated via `sha256_arm64` / `sha256_amd64` in the dispatch payload.
+**Public tools (tick, portal, switchboard, mint):** Standard Homebrew formulas with dual-arch macOS support: `depends_on :macos`, then `on_arm` / `on_intel` blocks at the top level, each with its own URL and sha256. Not inside an `on_macos` block: Homebrew 7 checks a trusted tap's formulae for every OS and arch when it's tapped, and a formula with no URL on Linux fails it ("invalid syntax in tap!"). Updated via `sha256_arm64` / `sha256_amd64` in the dispatch payload.
 
 **Private tools (stitch, bash-toolkit):** Use a custom `GitHubPrivateRepositoryDownloadStrategy` to handle private repository access:
 - Requires `HOMEBREW_GITHUB_API_TOKEN` environment variable

@@ -16,6 +16,9 @@ export HOMEBREW_GITHUB_API_TOKEN=your_token_here
 
 brew install leeovery/tools/stitch
 brew install leeovery/tools/bash-toolkit
+
+# Casks:
+brew install --cask leeovery/tools/spaceman-ruittenb
 ```
 
 ## Available Formulas
@@ -28,6 +31,12 @@ brew install leeovery/tools/bash-toolkit
 | `stitch` | Multi-strategy release management CLI | [leeovery/stitch](https://github.com/leeovery/stitch) | Yes |
 | `bash-toolkit` | Bash library for terminal messaging and UI | [leeovery/bash-toolkit](https://github.com/leeovery/bash-toolkit) | Yes |
 
+## Available Casks
+
+| Cask | Description | Repository |
+|------|-------------|------------|
+| `spaceman-ruittenb` | Spaceman, the menu-bar Spaces app: the ruittenb fork (bundle id `dev.ruittenb.Spaceman`), not homebrew/cask's `spaceman` | [ruittenb/Spaceman](https://github.com/ruittenb/Spaceman) |
+
 ## Updating
 
 ```bash
@@ -38,4 +47,4 @@ brew upgrade stitch
 brew upgrade bash-toolkit
 ```
 
-Formulas auto-update via GitHub Actions when new releases are published.
+Formulas auto-update via GitHub Actions when new releases are published. The Spaceman cask is updated by hand; the app updates itself through Sparkle.

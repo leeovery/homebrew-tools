@@ -32,6 +32,15 @@ This file provides comprehensive context to Claude Code when working with the le
 - Modular bash library for terminal messaging and UI (same private download strategy)
 - `brew install leeovery/tools/bash-toolkit`
 
+### Casks
+
+**Spaceman** (`Casks/spaceman-ruittenb.rb`)
+- Menu-bar Spaces app: René Uittenbogaard's fork (github.com/ruittenb/Spaceman, bundle id `dev.ruittenb.Spaceman`), not homebrew/cask's `spaceman` (the original 1.0, `dev.jaysce.Spaceman`)
+- Token `spaceman-ruittenb`, not `spaceman`: the same token would share `/opt/homebrew/Caskroom/spaceman` with homebrew/cask's, so Homebrew would take either for the other; `conflicts_with cask: "spaceman"`, since both install `/Applications/Spaceman.app`
+- Updated by hand (version and sha256 of the release's dmg); `auto_updates true`, since the app updates itself through Sparkle; `brew livecheck --cask leeovery/tools/spaceman-ruittenb` shows the latest release
+- Signed with a development certificate and not notarized, so `brew audit --new` and Gatekeeper reject it; `brew audit --cask --strict --online` passes
+- `brew install --cask leeovery/tools/spaceman-ruittenb`
+
 ## Architecture
 
 ### Formula Structure
@@ -110,6 +119,7 @@ brew install leeovery/tools/[tool-name]
 - `Formula/portal.rb` - Portal formula (public, dual-arch macOS)
 - `Formula/stitch.rb` - Stitch formula (private, custom download strategy)
 - `Formula/bash-toolkit.rb` - Bash Toolkit formula (private, custom download strategy)
+- `Casks/spaceman-ruittenb.rb` - Spaceman cask (the ruittenb fork, updated by hand)
 - `.github/workflows/update-formula.yml` - Automated formula update workflow
 - `README.md` - Main documentation with installation instructions
 - `INSTALL.md` - Detailed installation guide with troubleshooting

@@ -37,12 +37,13 @@ This file provides comprehensive context to Claude Code when working with the le
 **SitRep** (`Casks/sitrep.rb`)
 - The SitRep menu bar app, which carries and installs the sitrep Claude Code plugin (Swift, arm64 only, macOS 14+; bundle id `com.leeovery.sitrep`)
 - Private: downloads its release asset through GitHub's API, `https://api.github.com/repos/leeovery/sitrep/releases/assets/<asset_id>`, with `Accept: application/octet-stream` in the `url`'s `header:`
-- `GitHubTokenDownloadStrategy`, at the top of the file, adds `Authorization: Bearer $HOMEBREW_GITHUB_API_TOKEN` only as it fetches, so the token never shows in the cask's url specs (`brew info --json=v2`); Homebrew drops it at GitHub's redirect to the asset's storage. With no token it stops the download, naming `HOMEBREW_GITHUB_API_TOKEN`, where GitHub would answer a bare 401; the cask still loads without one, so `brew tap` and `brew update` never need it
-- Another cask in this tap must name its strategy class otherwise: `brew style` lints two definitions of one class's `fetch` (`Lint/DuplicateMethods`)
+- `GitHubTokenDownloadStrategy`, at the top of the file, adds `Authorization: Bearer $HOMEBREW_GITHUB_API_TOKEN` only as it fetches, so the token never shows in the cask's url specs (`brew info --json=v2`); Homebrew drops it at GitHub's redirect to the asset's storage. With no token it stops the download, and a 401, 403 or 404 from GitHub (a wrong or expired token, or one without access) gets the same words: `HOMEBREW_GITHUB_API_TOKEN`, and the access it needs. A zip already in the cache, as at `brew reinstall`, needs no token. The cask still loads without one, so `brew tap` and `brew update` never need it
+- A second private cask needs its own strategy class, since this one's message names SitRep. Homebrew evaluates each cask in an anonymous namespace, so two classes of one name never clash when it runs, but `brew style` lints the tap as one: with a copy of this file beside it, it reported `Lint/DuplicateMethods` for `fetch` and `Lint/ConstantReassignment` for its message
 - The asset id is the `asset_id` local in the cask block, and the url interpolates it: each upload has a new one, so it pins the release as a version in the url would (and `brew audit` takes the url as versioned)
 - `auto_updates` unset, so `brew upgrade` updates the app; livecheck skipped, since it can't read a private repository
-- `zap` never takes `~/.local/state/sitrep`, which is the board itself
-- Updated by the workflow: `tool=sitrep` with `version`, `sha256` and `asset_id`, dispatched by sitrep's `app/release` after each upload
+- `uninstall quit:` the app and its notices helper, `com.leeovery.sitrep.notices`
+- `zap` never takes `~/.local/state/sitrep`, which is the board itself, nor `~/Library/Logs/SitRep`, `app/release`'s logs on a Mac that releases
+- Updated by the workflow: `tool=sitrep` with `version`, `sha256` and `asset_id`, dispatched by sitrep's `app/release` after each upload of the latest release, which then waits on the workflow's run. The workflow checks the three against `X.Y.Z`, 64 hex digits and a number before it writes them, each to its own line of the cask, and commits "Update sitrep cask to v…"
 - `brew install --cask leeovery/tools/sitrep`
 
 ## Architecture
@@ -64,6 +65,7 @@ The repository uses GitHub Actions (`.github/workflows/update-formula.yml`) to a
 2. **Payload**: Includes tool name, version, SHA256, asset ID, and download URL
 3. **Process**: Updates appropriate formula file and commits changes
 4. **Support**: Handles `stitch`, `bash-toolkit`, `tick`, `portal`, `mint`, `switchboard` and `sitrep` via tool parameter
+5. **One at a time**: a `concurrency` group queues a dispatch behind one running, so two can't race each other's `git push`; a run times out after 5 minutes
 
 ## Workflow Integration
 

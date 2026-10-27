@@ -36,8 +36,9 @@ This file provides comprehensive context to Claude Code when working with the le
 
 **SitRep** (`Casks/sitrep.rb`)
 - The SitRep menu bar app, which carries and installs the sitrep Claude Code plugin (Swift, arm64 only, macOS 14+; bundle id `com.leeovery.sitrep`)
-- Private: downloads its release asset through GitHub's API, `https://api.github.com/repos/leeovery/sitrep/releases/assets/<asset_id>`, with `Authorization: Bearer $HOMEBREW_GITHUB_API_TOKEN` and `Accept: application/octet-stream` in the `url`'s `header:`
-- `GitHubTokenDownloadStrategy`, at the top of the file, only stops a download with no token, naming `HOMEBREW_GITHUB_API_TOKEN`, where GitHub would answer a bare 401; the cask still loads without one, so `brew tap` and `brew update` never need it
+- Private: downloads its release asset through GitHub's API, `https://api.github.com/repos/leeovery/sitrep/releases/assets/<asset_id>`, with `Accept: application/octet-stream` in the `url`'s `header:`
+- `GitHubTokenDownloadStrategy`, at the top of the file, adds `Authorization: Bearer $HOMEBREW_GITHUB_API_TOKEN` only as it fetches, so the token never shows in the cask's url specs (`brew info --json=v2`); Homebrew drops it at GitHub's redirect to the asset's storage. With no token it stops the download, naming `HOMEBREW_GITHUB_API_TOKEN`, where GitHub would answer a bare 401; the cask still loads without one, so `brew tap` and `brew update` never need it
+- Another cask in this tap must name its strategy class otherwise: `brew style` lints two definitions of one class's `fetch` (`Lint/DuplicateMethods`)
 - The asset id is the `asset_id` local in the cask block, and the url interpolates it: each upload has a new one, so it pins the release as a version in the url would (and `brew audit` takes the url as versioned)
 - `auto_updates` unset, so `brew upgrade` updates the app; livecheck skipped, since it can't read a private repository
 - `zap` never takes `~/.local/state/sitrep`, which is the board itself
@@ -128,7 +129,7 @@ brew audit --cask --strict <tap>/[cask-name]
 - `Formula/portal.rb` - Portal formula (public, dual-arch macOS)
 - `Formula/stitch.rb` - Stitch formula (private, custom download strategy)
 - `Formula/bash-toolkit.rb` - Bash Toolkit formula (private, custom download strategy)
-- `Casks/sitrep.rb` - SitRep cask (private, asset id in the url, token in its headers)
+- `Casks/sitrep.rb` - SitRep cask (private, asset id in the url, token added by its download strategy)
 - `.github/workflows/update-formula.yml` - Automated formula update workflow
 - `README.md` - Main documentation with installation instructions
 

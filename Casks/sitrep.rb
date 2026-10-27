@@ -1,8 +1,11 @@
-# The url's headers carry the token. This only stops a download without one,
-# which GitHub would refuse with a bare 401.
+# Sends the token only as it downloads, so it never shows in the cask's url
+# specs (brew info --json), and stops a download without one, which GitHub
+# would refuse with a bare 401. Homebrew drops the header itself once GitHub
+# redirects to the asset's storage.
 class GitHubTokenDownloadStrategy < CurlDownloadStrategy
   def fetch(timeout: nil)
-    if ENV.fetch("HOMEBREW_GITHUB_API_TOKEN", "").empty?
+    token = ENV.fetch("HOMEBREW_GITHUB_API_TOKEN", "")
+    if token.empty?
       raise CurlDownloadStrategyError.new(
         url,
         "SitRep downloads from a private repository: set HOMEBREW_GITHUB_API_TOKEN " \
@@ -10,6 +13,10 @@ class GitHubTokenDownloadStrategy < CurlDownloadStrategy
       )
     end
 
+    meta[:headers] = [
+      *meta[:headers]&.reject { |header| header.start_with?("Authorization") },
+      "Authorization: Bearer #{token}",
+    ]
     super
   end
 end
@@ -24,10 +31,7 @@ cask "sitrep" do
   # as a version in the url would.
   url "https://api.github.com/repos/leeovery/sitrep/releases/assets/#{asset_id}",
       using:  GitHubTokenDownloadStrategy,
-      header: [
-        "Authorization: Bearer #{ENV.fetch("HOMEBREW_GITHUB_API_TOKEN", "")}",
-        "Accept: application/octet-stream",
-      ]
+      header: "Accept: application/octet-stream"
   name "SitRep"
   desc "Board for Claude Code sessions in the menu bar"
   homepage "https://github.com/leeovery/sitrep"

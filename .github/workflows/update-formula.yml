@@ -110,8 +110,16 @@ jobs:
 
             # Update amd64 sha256
             sed -i "/darwin_amd64/{ n; s/sha256 \".*\"/sha256 \"$SHA256_AMD64\"/; }" $FORMULA_FILE
+          elif [ "$TOOL" = "sitrep" ]; then
+            FORMULA_FILE="Casks/sitrep.rb"
+            SHA256="${{ github.event.client_payload.sha256 }}"
+            ASSET_ID="${{ github.event.client_payload.asset_id }}"
+
+            sed -i "s/asset_id = \".*\"/asset_id = \"$ASSET_ID\"/" $FORMULA_FILE
+            sed -i "s/version \".*\"/version \"$VERSION\"/" $FORMULA_FILE
+            sed -i "s/sha256 \".*\"/sha256 \"$SHA256\"/" $FORMULA_FILE
           else
-            echo "Error: unsupported tool '$TOOL'. Supported tools: stitch, bash-toolkit, tick, portal, mint, switchboard"
+            echo "Error: unsupported tool '$TOOL'. Supported tools: stitch, bash-toolkit, tick, portal, mint, switchboard, sitrep"
             exit 1
           fi
 
@@ -135,6 +143,8 @@ jobs:
             git add Formula/mint.rb
           elif [ "$TOOL" = "switchboard" ]; then
             git add Formula/switchboard.rb
+          elif [ "$TOOL" = "sitrep" ]; then
+            git add Casks/sitrep.rb
           fi
 
           git commit -m "Update $TOOL formula to v$VERSION" || exit 0

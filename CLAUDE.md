@@ -34,12 +34,15 @@ This file provides comprehensive context to Claude Code when working with the le
 
 ### Casks
 
-**Spaceman** (`Casks/spaceman-ruittenb.rb`)
-- Menu-bar Spaces app: René Uittenbogaard's fork (github.com/ruittenb/Spaceman, bundle id `dev.ruittenb.Spaceman`), not homebrew/cask's `spaceman` (the original 1.0, `dev.jaysce.Spaceman`)
-- Token `spaceman-ruittenb`, not `spaceman`: the same token would share `/opt/homebrew/Caskroom/spaceman` with homebrew/cask's, so Homebrew would take either for the other; `conflicts_with cask: "spaceman"`, since both install `/Applications/Spaceman.app`
-- Updated by hand (version and sha256 of the release's dmg); `auto_updates true`, since the app updates itself through Sparkle; `brew livecheck --cask leeovery/tools/spaceman-ruittenb` shows the latest release
-- Signed with a development certificate and not notarized, so `brew audit --new` and Gatekeeper reject it; `brew audit --cask --strict --online` passes
-- `brew install --cask leeovery/tools/spaceman-ruittenb`
+**SitRep** (`Casks/sitrep.rb`)
+- The SitRep menu bar app, which carries and installs the sitrep Claude Code plugin (Swift, arm64 only, macOS 14+; bundle id `com.leeovery.sitrep`)
+- Private: downloads its release asset through GitHub's API, `https://api.github.com/repos/leeovery/sitrep/releases/assets/<asset_id>`, with `Authorization: Bearer $HOMEBREW_GITHUB_API_TOKEN` and `Accept: application/octet-stream` in the `url`'s `header:`
+- `GitHubTokenDownloadStrategy`, at the top of the file, only stops a download with no token, naming `HOMEBREW_GITHUB_API_TOKEN`, where GitHub would answer a bare 401; the cask still loads without one, so `brew tap` and `brew update` never need it
+- The asset id is the `asset_id` local in the cask block, and the url interpolates it: each upload has a new one, so it pins the release as a version in the url would (and `brew audit` takes the url as versioned)
+- `auto_updates` unset, so `brew upgrade` updates the app; livecheck skipped, since it can't read a private repository
+- `zap` never takes `~/.local/state/sitrep`, which is the board itself
+- Updated by the workflow: `tool=sitrep` with `version`, `sha256` and `asset_id`, dispatched by sitrep's `app/release` after each upload
+- `brew install --cask leeovery/tools/sitrep`
 
 ## Architecture
 
@@ -59,7 +62,7 @@ The repository uses GitHub Actions (`.github/workflows/update-formula.yml`) to a
 1. **Trigger**: Repository dispatch events from source repositories
 2. **Payload**: Includes tool name, version, SHA256, asset ID, and download URL
 3. **Process**: Updates appropriate formula file and commits changes
-4. **Support**: Handles `stitch`, `bash-toolkit`, `tick`, and `portal` via tool parameter
+4. **Support**: Handles `stitch`, `bash-toolkit`, `tick`, `portal`, `mint`, `switchboard` and `sitrep` via tool parameter
 
 ## Workflow Integration
 
@@ -83,7 +86,7 @@ To add a new tool to the tap:
 1. Create new formula file in `Formula/[tool-name].rb`
 2. Use the `GitHubPrivateRepositoryDownloadStrategy` pattern
 3. Update the workflow to handle the new tool name
-4. Add tool documentation to README.md and INSTALL.md
+4. Add tool documentation to README.md
 
 ### Formula Maintenance
 - Asset ID mappings are automatically maintained by the workflow
@@ -100,6 +103,12 @@ brew install --build-from-source Formula/[tool-name].rb
 
 # Test from tap
 brew install leeovery/tools/[tool-name]
+
+# Casks: Homebrew loads a cask only from a trusted tap, never from a path,
+# so check a branch's cask from a scratch tap (brew tap-new --no-git, its
+# Casks/ given the file, brew trust), then brew untrust and brew untap it
+brew style --cask <tap>/[cask-name]
+brew audit --cask --strict <tap>/[cask-name]
 ```
 
 ## Authentication Requirements
@@ -119,14 +128,13 @@ brew install leeovery/tools/[tool-name]
 - `Formula/portal.rb` - Portal formula (public, dual-arch macOS)
 - `Formula/stitch.rb` - Stitch formula (private, custom download strategy)
 - `Formula/bash-toolkit.rb` - Bash Toolkit formula (private, custom download strategy)
-- `Casks/spaceman-ruittenb.rb` - Spaceman cask (the ruittenb fork, updated by hand)
+- `Casks/sitrep.rb` - SitRep cask (private, asset id in the url, token in its headers)
 - `.github/workflows/update-formula.yml` - Automated formula update workflow
 - `README.md` - Main documentation with installation instructions
-- `INSTALL.md` - Detailed installation guide with troubleshooting
 
 ## Important Notes
 
-- Private tools (stitch, bash-toolkit) require authentication; public tools (tick, portal) do not
+- Private tools (stitch, bash-toolkit, the sitrep cask) require authentication; public tools (tick, portal) do not
 - Asset IDs must be updated in private formulas when new releases are created
 - The custom download strategy is essential for private repository access
 - Public formulas use dual-arch sha256 checksums instead of asset IDs

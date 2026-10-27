@@ -1,4 +1,7 @@
 name: Update Formula
+# Names each run by its payload, so a sender (sitrep's app/release) can tell
+# its own run from another tool's that started beside it.
+run-name: Update ${{ github.event.client_payload.tool }} to v${{ github.event.client_payload.version }}
 
 on:
   repository_dispatch:

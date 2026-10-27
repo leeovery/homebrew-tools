@@ -66,6 +66,7 @@ The repository uses GitHub Actions (`.github/workflows/update-formula.yml`) to a
 3. **Process**: Updates appropriate formula file and commits changes
 4. **Support**: Handles `stitch`, `bash-toolkit`, `tick`, `portal`, `mint`, `switchboard` and `sitrep` via tool parameter
 5. **One at a time**: a `concurrency` group queues a dispatch behind one running, so two can't race each other's `git push`; a run times out after 5 minutes
+6. **Named by its payload**: `run-name` makes each run "Update <tool> to v<version>", so a sender waiting on its run (sitrep's `app/release`) tells it from another tool's that started beside it; keep the name as it is, or change the sender with it
 
 ## Workflow Integration
 

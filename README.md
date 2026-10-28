@@ -17,8 +17,8 @@ export HOMEBREW_GITHUB_API_TOKEN=your_token_here
 brew install leeovery/tools/stitch
 brew install leeovery/tools/bash-toolkit
 
-# Casks:
-brew install --cask leeovery/tools/spaceman-ruittenb
+# Casks (private, so the same token):
+brew install --cask leeovery/tools/sitrep
 ```
 
 ## Available Formulas
@@ -33,9 +33,9 @@ brew install --cask leeovery/tools/spaceman-ruittenb
 
 ## Available Casks
 
-| Cask | Description | Repository |
-|------|-------------|------------|
-| `spaceman-ruittenb` | Spaceman, the menu-bar Spaces app: the ruittenb fork (bundle id `dev.ruittenb.Spaceman`), not homebrew/cask's `spaceman` | [ruittenb/Spaceman](https://github.com/ruittenb/Spaceman) |
+| Cask | Description | Repository | Auth Required |
+|------|-------------|------------|---------------|
+| `sitrep` | SitRep, the menu bar board for Claude Code sessions, carrying the sitrep plugin (Apple silicon, macOS 14+) | [leeovery/sitrep](https://github.com/leeovery/sitrep) | Yes |
 
 ## Updating
 
@@ -45,6 +45,7 @@ brew upgrade portal
 brew upgrade switchboard
 brew upgrade stitch
 brew upgrade bash-toolkit
+brew upgrade --cask sitrep
 ```
 
-Formulas auto-update via GitHub Actions when new releases are published. The Spaceman cask is updated by hand; the app updates itself through Sparkle.
+Formulas and casks auto-update via GitHub Actions when new releases are published.

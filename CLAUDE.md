@@ -42,6 +42,7 @@ This file provides comprehensive context to Claude Code when working with the le
 - The asset id is the `asset_id` local in the cask block, and the url interpolates it: each upload has a new one, so it pins the release as a version in the url would (and `brew audit` takes the url as versioned)
 - `auto_updates` unset, so `brew upgrade` updates the app; livecheck skipped, since it can't read a private repository
 - `uninstall quit:` the app and its notices helper, `com.leeovery.sitrep.notices`
+- `postflight` opens `/Applications/SitRep.app` after every install and upgrade, up to three times a second apart, never failing the install: an upgrade quits SitRep, and its start is what refreshes the plugin it carries. A block rather than `postflight_steps`, which `brew style` asks for (`Cask/InstallSteps`): Homebrew runs those steps in a sandbox, where `open` finds no executable in the app (-10827, Homebrew 7.0.11)
 - `zap` never takes `~/.local/state/sitrep`, which is the board itself, nor `~/Library/Logs/SitRep`, `app/release`'s logs on a Mac that releases
 - Updated by the workflow: `tool=sitrep` with `version`, `sha256` and `asset_id`, dispatched by sitrep's `app/release` after each upload of the latest release, which then waits on the workflow's run. The workflow checks the three against `X.Y.Z`, 64 hex digits and a number before it writes them, each to its own line of the cask, and commits "Update sitrep cask to v…"
 - `brew install --cask leeovery/tools/sitrep`

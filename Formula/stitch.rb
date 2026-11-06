@@ -4,7 +4,7 @@ class GitHubPrivateRepositoryDownloadStrategy < CurlDownloadStrategy
       # Convert GitHub release download URL to API asset URL
       asset_id = get_asset_id(url)
       if asset_id
-        api_url = "https://api.github.com/repos/leeovery/stitch/releases/assets/#{asset_id}"
+        api_url = "https://api.github.com/repos/leeovery/stitch-bash/releases/assets/#{asset_id}"
         curl_args = ["--location", "--remote-time", "--output", temporary_path]
         curl_args += ["--header", "Authorization: token #{ENV["HOMEBREW_GITHUB_API_TOKEN"]}"]
         curl_args += ["--header", "Accept: application/octet-stream"]
@@ -169,8 +169,8 @@ end
 
 class Stitch < Formula
   desc "Release management CLI for coordinated feature releases"
-  homepage "https://github.com/leeovery/stitch"
-  url "https://github.com/leeovery/stitch/releases/download/v1.6.6/stitch-v1.6.6.tar.gz", using: GitHubPrivateRepositoryDownloadStrategy
+  homepage "https://github.com/leeovery/stitch-bash"
+  url "https://github.com/leeovery/stitch-bash/releases/download/v1.6.6/stitch-v1.6.6.tar.gz", using: GitHubPrivateRepositoryDownloadStrategy
   sha256 "03b28de7b4db1c9af77132b8f4b6e243f8ca8f3e58e3b572984f30fbc0e0d262"
   version "1.6.6"
 

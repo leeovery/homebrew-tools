@@ -64,7 +64,7 @@ jobs:
             fi
           elif [ "$TOOL" = "stitch" ]; then
             FORMULA_FILE="Formula/stitch.rb"
-            REPO="leeovery/stitch"
+            REPO="leeovery/stitch-bash"
             SHA256="${{ github.event.client_payload.sha256 }}"
             ASSET_ID="${{ github.event.client_payload.asset_id }}"
 

@@ -54,23 +54,13 @@ cask "sitrep" do
 
   app "SitRep.app"
 
-  # An upgrade quits SitRep to swap its bundle, and nothing else starts it
-  # again; its start is what refreshes the plugin it carries, so the app and
-  # the plugin never part. Tried three times, a second apart: an open straight
-  # after a bundle is moved in has failed once with LaunchServices' -600. It
-  # never fails the install, as with no screen to open it on. A block, not
-  # postflight_steps, which brew style asks for: Homebrew runs those steps in a
-  # sandbox, where open finds no executable in the app (-10827, tried 28 Oct
-  # 2026 on Homebrew 7.0.11).
-  postflight do
-    3.times do |attempt|
-      sleep 1 if attempt.positive?
-      break if system_command("/usr/bin/open", args:         ["#{appdir}/SitRep.app"],
-                                               must_succeed: false,
-                                               print_stderr: false).success?
-    end
-  end
-
+  # An upgrade quits SitRep and its notices helper to swap the bundle, and
+  # Homebrew opens again, once the upgrade is done, whichever of them it quit:
+  # SitRep's start is what refreshes the plugin it carries, so the app and the
+  # plugin never part. A reinstall or a first install starts nothing: open
+  # SitRep then. No postflight starts it any more: Homebrew 7 deprecates the
+  # block, and its postflight_steps run in a sandbox where open finds no
+  # executable in the app (-10827, tried 28 Oct 2026 on Homebrew 7.0.11).
   uninstall quit: [
     "com.leeovery.sitrep",
     "com.leeovery.sitrep.notices",

@@ -1,10 +1,11 @@
 class Portal < Formula
-  desc "Interactive session picker for tmux and Zellij"
+  desc "Interactive session picker for zmx"
   homepage "https://github.com/leeovery/portal"
   version "0.12.6"
   license "MIT"
 
   depends_on :macos
+  depends_on "neurosnap/tap/zmx"
 
   on_arm do
     url "https://github.com/leeovery/portal/releases/download/v#{version}/portal_#{version}_darwin_arm64.tar.gz"
@@ -21,6 +22,10 @@ class Portal < Formula
 
   def caveats
     <<~EOS
+      Coming from the tmux version of Portal? Run this once, before anything else:
+
+        portal migrate
+
       To activate shell integration, add to your ~/.zshrc:
 
         eval "$(portal init zsh)"

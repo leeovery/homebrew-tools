@@ -22,10 +22,6 @@ class Portal < Formula
 
   def caveats
     <<~EOS
-      Coming from the tmux version of Portal? Run this once, before anything else:
-
-        portal migrate
-
       To activate shell integration, add to your ~/.zshrc:
 
         eval "$(portal init zsh)"

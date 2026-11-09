@@ -31,9 +31,9 @@ class GitHubTokenDownloadStrategy < CurlDownloadStrategy
 end
 
 cask "sitrep" do
-  asset_id = "727239415"
-  version "0.4.0"
-  sha256 "b108177b196d81cda039f3ffa54ab6d754ef0da9dd628f3c29d1398a728703b5"
+  asset_id = "728093824"
+  version "0.4.1"
+  sha256 "d340d986e85eb09728e2bec496da11ca052394ba42b0d30c9886626797a7f730"
 
   # The release asset through GitHub's API, the only way to download it from a
   # private repository. Its id is new at every upload, so it pins the release

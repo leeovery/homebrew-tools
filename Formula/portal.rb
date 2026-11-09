@@ -1,7 +1,7 @@
 class Portal < Formula
   desc "Interactive session picker for zmx"
   homepage "https://github.com/leeovery/portal"
-  version "1.1.0"
+  version "1.1.1"
   license "MIT"
 
   depends_on :macos
@@ -9,11 +9,11 @@ class Portal < Formula
 
   on_arm do
     url "https://github.com/leeovery/portal/releases/download/v#{version}/portal_#{version}_darwin_arm64.tar.gz"
-    sha256 "9ff534ed3d6a4cd69debdb23947b555d68f4d6b1b801bc84137a02b355f73bcc"
+    sha256 "ec0af6a925cb9b9d77d06e1a8820f89e8d1036fd7eafda09178a084477b2a8ef"
   end
   on_intel do
     url "https://github.com/leeovery/portal/releases/download/v#{version}/portal_#{version}_darwin_amd64.tar.gz"
-    sha256 "27d987a23c8dc27ccf28a19f8c20db3b721fc2ab64af9ffb0cf6c2446a6aba96"
+    sha256 "e4112ccdb8c2ff7fa257e1215cc7e58079115604be25ad0e7ded1e91a81d0f00"
   end
 
   def install

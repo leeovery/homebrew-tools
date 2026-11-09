@@ -26,8 +26,15 @@ class Switchboard < Formula
         switchboard setup
 
       It walks through your accounts and their tokens, priming, the service
-      that keeps the router running, the claude link (with the one line to add
-      to your shell's startup file) and the Claude Code skill.
+      that keeps the router running, the claude link and the line in your
+      shell's startup file that puts it first, and the Claude Code skill.
+
+      To take it away again, run this before brew uninstall:
+
+        switchboard uninstall
+
+      It keeps your config, tokens and history for a reinstall, unless you
+      add --all.
     EOS
   end
 

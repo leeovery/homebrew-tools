@@ -1,18 +1,18 @@
 class Switchboard < Formula
   desc "Spread Claude Code sessions across several Claude subscriptions"
   homepage "https://github.com/leeovery/switchboard"
-  version "0.5.3"
+  version "0.5.4"
   license "MIT"
 
   depends_on :macos
 
   on_arm do
     url "https://github.com/leeovery/switchboard/releases/download/v#{version}/switchboard_#{version}_darwin_arm64.tar.gz"
-    sha256 "4c090378957aa2b4d52c38062d8f4d414fa11315cee40ce6c6837b092be4f6ff"
+    sha256 "3d7599ffa979a0a69c872213e158eccad5edea5ffce6b32c14769136d704a2fc"
   end
   on_intel do
     url "https://github.com/leeovery/switchboard/releases/download/v#{version}/switchboard_#{version}_darwin_amd64.tar.gz"
-    sha256 "c5755f33ecca56b582c51d16abb61180d516a66984603760c929dd93eeb247e4"
+    sha256 "af7f8b8232994d8ddc4510b2bab94ce345f1861a53ded87fc27afb503998463a"
   end
 
   def install

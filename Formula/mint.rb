@@ -1,18 +1,18 @@
 class Mint < Formula
   desc "AI-minted releases and commits"
   homepage "https://github.com/leeovery/mint"
-  version "0.2.7"
+  version "0.2.8"
   license "MIT"
 
   depends_on :macos
 
   on_arm do
     url "https://github.com/leeovery/mint/releases/download/v#{version}/mint_#{version}_darwin_arm64.tar.gz"
-    sha256 "61a6f11a96dfcf585b2bcf38e181e31c9e0d71acfb90643043ee28ec3cba6123"
+    sha256 "cfd0cd7b5f53fb9a511bc5e5d8ddfa73332eb3729663c0f660e041d26078e20b"
   end
   on_intel do
     url "https://github.com/leeovery/mint/releases/download/v#{version}/mint_#{version}_darwin_amd64.tar.gz"
-    sha256 "c2dd64377eabd652d7b34cc4d3fc4c5dcbe6995df8cd29474ebb5643a8053038"
+    sha256 "15bcf300487f93d7032aaa62b9c9af2860cd55bc403eb8e203d38d3cf61057f2"
   end
 
   def install

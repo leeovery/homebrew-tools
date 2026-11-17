@@ -9,6 +9,7 @@ Homebrew tap for personal CLI tools.
 brew install leeovery/tools/tick
 brew install leeovery/tools/portal
 brew install leeovery/tools/switchboard
+brew install leeovery/tools/kit
 
 # Private tools require a GitHub Personal Access Token with 'repo' scope:
 #   https://github.com/settings/tokens
@@ -28,6 +29,7 @@ brew install --cask leeovery/tools/sitrep
 | `tick` | Priority-based task scheduling CLI | [leeovery/tick](https://github.com/leeovery/tick) | No (public) |
 | `portal` | Interactive session picker for tmux | [leeovery/portal](https://github.com/leeovery/portal) | No (public) |
 | `switchboard` | Spread Claude Code sessions across several Claude subscriptions | [leeovery/switchboard](https://github.com/leeovery/switchboard) | No (public) |
+| `kit` | Set up a Mac from a config repository, and keep it that way | [leeovery/kit](https://github.com/leeovery/kit) | No (public) |
 | `stitch` | Multi-strategy release management CLI | [leeovery/stitch](https://github.com/leeovery/stitch) | Yes |
 | `bash-toolkit` | Bash library for terminal messaging and UI | [leeovery/bash-toolkit](https://github.com/leeovery/bash-toolkit) | Yes |
 

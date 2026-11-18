@@ -1,6 +1,6 @@
 cask "sitrep" do
-  version "0.7.1"
-  sha256 "7200a8086b4d833fe43dbdd03f86fdbfd18ed5c79bc74aa70ec178ce283046df"
+  version "0.8.0"
+  sha256 "cf30b7462eb9e094131c931f24992bf1c976767e68622730e6d77c32b4c49784"
 
   # The zip app/release-upload uploads, named by release_asset in
   # app/release-common.

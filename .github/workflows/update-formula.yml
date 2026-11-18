@@ -33,7 +33,6 @@ jobs:
           PAYLOAD_TOOL: ${{ github.event.client_payload.tool }}
           PAYLOAD_VERSION: ${{ github.event.client_payload.version }}
           PAYLOAD_SHA256: ${{ github.event.client_payload.sha256 }}
-          PAYLOAD_ASSET_ID: ${{ github.event.client_payload.asset_id }}
         run: |
           VERSION="$PAYLOAD_VERSION"
           TOOL="$PAYLOAD_TOOL"
@@ -142,21 +141,18 @@ jobs:
           elif [ "$TOOL" = "sitrep" ]; then
             FORMULA_FILE="Casks/sitrep.rb"
             SHA256="$PAYLOAD_SHA256"
-            ASSET_ID="$PAYLOAD_ASSET_ID"
 
-            if ! [[ $VERSION =~ ^[0-9]+\.[0-9]+\.[0-9]+$ && $SHA256 =~ ^[0-9a-f]{64}$ && $ASSET_ID =~ ^[0-9]+$ ]]; then
-              echo "Error: sitrep needs a version X.Y.Z, a sha256 of 64 hex digits and a numeric asset_id; got '$VERSION', '$SHA256', '$ASSET_ID'"
+            if ! [[ $VERSION =~ ^[0-9]+\.[0-9]+\.[0-9]+$ && $SHA256 =~ ^[0-9a-f]{64}$ ]]; then
+              echo "Error: sitrep needs a version X.Y.Z and a sha256 of 64 hex digits; got '$VERSION', '$SHA256'"
               exit 1
             fi
 
-            sed -i "s/^  asset_id = \"[0-9]*\"$/  asset_id = \"$ASSET_ID\"/" $FORMULA_FILE
             sed -i "s/^  version \"[0-9.]*\"$/  version \"$VERSION\"/" $FORMULA_FILE
             sed -i "s/^  sha256 \"[0-9a-f]*\"$/  sha256 \"$SHA256\"/" $FORMULA_FILE
 
-            if ! grep -qx "  asset_id = \"$ASSET_ID\"" $FORMULA_FILE ||
-              ! grep -qx "  version \"$VERSION\"" $FORMULA_FILE ||
+            if ! grep -qx "  version \"$VERSION\"" $FORMULA_FILE ||
               ! grep -qx "  sha256 \"$SHA256\"" $FORMULA_FILE; then
-              echo "Error: $FORMULA_FILE has no asset_id, version or sha256 line where the workflow looks for it"
+              echo "Error: $FORMULA_FILE has no version or sha256 line where the workflow looks for it"
               exit 1
             fi
           else

@@ -17,6 +17,7 @@ class Kit < Formula
 
   def install
     bin.install "kit"
+    libexec.install "kit.app"
   end
 
   test do

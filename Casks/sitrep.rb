@@ -19,6 +19,11 @@ cask "sitrep" do
 
   app "SitRep.app"
 
+  # The CLI the bundle carries for its plugin, linked into Homebrew's bin so
+  # a login shell, in Ghostty or over SSH, finds sitrep: bare, it opens the
+  # board in that terminal. It is a compiled binary, so it needs no Bun.
+  binary "#{appdir}/SitRep.app/Contents/Resources/Plugin/bin/sitrep"
+
   # An upgrade quits SitRep and its notices helper to swap the bundle, and
   # Homebrew opens again, once the upgrade is done, whichever of them it quit:
   # SitRep's start is what refreshes the plugin it carries, so the app and the

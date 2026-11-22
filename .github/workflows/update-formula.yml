@@ -1,6 +1,7 @@
 name: Update Formula
-# Names each run by its payload, so a sender (sitrep's app/release) can tell
-# its own run from another tool's that started beside it.
+# Names each run by its payload, so a sender (press upload, which kit,
+# mint, switchboard and sitrep release through) can tell its own run from
+# another tool's that started beside it.
 run-name: Update ${{ github.event.client_payload.tool }} to v${{ github.event.client_payload.version }}
 
 on:
@@ -16,7 +17,7 @@ concurrency:
 jobs:
   update:
     runs-on: ubuntu-latest
-    # sitrep's app/release waits on this run, so it must end.
+    # press upload waits on this run, so it must end.
     timeout-minutes: 5
     # Pushing the formula commit back to this repo needs write access, which the
     # built-in GITHUB_TOKEN grants once asked. This repo is the dispatch target,

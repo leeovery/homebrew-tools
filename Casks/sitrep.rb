@@ -2,8 +2,8 @@ cask "sitrep" do
   version "0.9.0"
   sha256 "dcf62e166d0e1bda30c8e594a88f5aaf0d8ccdeb7d4205c633f04a1757ba393d"
 
-  # The zip app/release-upload uploads, named by release_asset in
-  # app/release-common.
+  # The zip press upload uploads, named by [package] name in sitrep's
+  # .press.toml.
   url "https://github.com/leeovery/sitrep/releases/download/v#{version}/SitRep-#{version}.zip"
   name "SitRep"
   desc "Board for Claude Code sessions in the menu bar"
@@ -37,8 +37,10 @@ cask "sitrep" do
   ]
 
   # Never ~/.local/state/sitrep: that is the board itself, not the app's. Nor
-  # ~/Library/Logs/SitRep, which only app/release writes, on a Mac that
-  # releases: its logs keep what resending the cask needs.
+  # ~/Library/Logs/press, where press logs every project's releases on a Mac
+  # that releases, sitrep's among them: its logs keep what resending the cask
+  # needs. ~/Library/Logs/SitRep, where sitrep's release scripts logged before
+  # press, nothing writes now.
   zap trash: [
     "~/Library/Application Support/sitrep",
     "~/Library/Caches/com.leeovery.sitrep",

@@ -1,6 +1,6 @@
 cask "sitrep" do
-  version "0.9.1"
-  sha256 "4688e5f6fcba242bf242c7e73a88681d939fa2d7ac9a7c9b990ab58c85ef0fcc"
+  version "0.10.0"
+  sha256 "9ce555b0520205a9aea9174adabbc10647944d73938921c6e383e6996303f451"
 
   # The zip press upload uploads, named by [package] name in sitrep's
   # .press.toml.

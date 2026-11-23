@@ -1,18 +1,18 @@
 class Kit < Formula
   desc "Set up a Mac from a config repository, and keep it that way"
   homepage "https://github.com/leeovery/kit"
-  version "0.5.0"
+  version "0.5.1"
   license "MIT"
 
   depends_on :macos
 
   on_arm do
     url "https://github.com/leeovery/kit/releases/download/v#{version}/kit_#{version}_darwin_arm64.tar.gz"
-    sha256 "2d2c164633188c5473be41b04eaa9f650823bed34b19d8e16c0eddeac914dc1e"
+    sha256 "29136370e0772bb7c42799c72933de0188390d43e008b929f7128e0b0607325c"
   end
   on_intel do
     url "https://github.com/leeovery/kit/releases/download/v#{version}/kit_#{version}_darwin_amd64.tar.gz"
-    sha256 "6633346c3bde41f61262e18b3230d2fa459acb224b33637504b4e94d107f2297"
+    sha256 "a5fee5dbb4463b5894fc6e202953c127573b2924f21543d8030d406da8cb5371"
   end
 
   def install

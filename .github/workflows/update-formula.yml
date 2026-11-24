@@ -34,6 +34,8 @@ jobs:
           PAYLOAD_TOOL: ${{ github.event.client_payload.tool }}
           PAYLOAD_VERSION: ${{ github.event.client_payload.version }}
           PAYLOAD_SHA256: ${{ github.event.client_payload.sha256 }}
+          PAYLOAD_SHA256_ARM64: ${{ github.event.client_payload.sha256_arm64 }}
+          PAYLOAD_SHA256_AMD64: ${{ github.event.client_payload.sha256_amd64 }}
         run: |
           VERSION="$PAYLOAD_VERSION"
           TOOL="$PAYLOAD_TOOL"
@@ -63,21 +65,50 @@ jobs:
               sed -i "/asset_ids = {/a\\      \"$VERSION\" => \"$ASSET_ID\"," $FORMULA_FILE
             fi
           elif [ "$TOOL" = "stitch" ]; then
+            # The Go Stitch: an archive for each chip from its private repo,
+            # each found by its file name in the release, so only the version
+            # and the two sha256s change. Each sha256 is the first after its
+            # url. A payload without both, as the bash Stitch sent before it
+            # moved to stitch-bash, is refused, never written.
             FORMULA_FILE="Formula/stitch.rb"
-            REPO="leeovery/stitch-bash"
-            SHA256="${{ github.event.client_payload.sha256 }}"
-            ASSET_ID="${{ github.event.client_payload.asset_id }}"
+            SHA256_ARM64="$PAYLOAD_SHA256_ARM64"
+            SHA256_AMD64="$PAYLOAD_SHA256_AMD64"
 
-            RELEASE_URL="https://github.com/$REPO/releases/download/v$VERSION/$TOOL-v$VERSION.tar.gz"
+            if ! [[ $VERSION =~ ^[0-9]+\.[0-9]+\.[0-9]+$ && $SHA256_ARM64 =~ ^[0-9a-f]{64}$ && $SHA256_AMD64 =~ ^[0-9a-f]{64}$ ]]; then
+              echo "Error: stitch needs a version X.Y.Z and two sha256s of 64 hex digits, sha256_arm64 and sha256_amd64; got '$VERSION', '$SHA256_ARM64', '$SHA256_AMD64'"
+              exit 1
+            fi
 
-            sed -i "s/version \".*\"/version \"$VERSION\"/" $FORMULA_FILE
-            sed -i "s|url \".*\"|url \"$RELEASE_URL\"|" $FORMULA_FILE
-            sed -i "s/sha256 \".*\"/sha256 \"$SHA256\"/" $FORMULA_FILE
+            sed -i "s/^  version \"[0-9.]*\"$/  version \"$VERSION\"/" $FORMULA_FILE
+            sed -i "/darwin_arm64/,/sha256/ s/^    sha256 \"[0-9a-f]*\"$/    sha256 \"$SHA256_ARM64\"/" $FORMULA_FILE
+            sed -i "/darwin_amd64/,/sha256/ s/^    sha256 \"[0-9a-f]*\"$/    sha256 \"$SHA256_AMD64\"/" $FORMULA_FILE
 
-            if grep -q "\"$VERSION\" =>" $FORMULA_FILE; then
-              sed -i "s/\"$VERSION\" => \"[^\"]*\"/\"$VERSION\" => \"$ASSET_ID\"/" $FORMULA_FILE
-            else
-              sed -i "/asset_ids = {/a\\      \"$VERSION\" => \"$ASSET_ID\"," $FORMULA_FILE
+            if ! grep -qx "  version \"$VERSION\"" $FORMULA_FILE ||
+              ! grep -A2 darwin_arm64 $FORMULA_FILE | grep -qx "    sha256 \"$SHA256_ARM64\"" ||
+              ! grep -A2 darwin_amd64 $FORMULA_FILE | grep -qx "    sha256 \"$SHA256_AMD64\""; then
+              echo "Error: $FORMULA_FILE has no version or sha256 line where the workflow looks for it"
+              exit 1
+            fi
+          elif [ "$TOOL" = "stitch-bash" ]; then
+            # The bash Stitch, under its own name since the Go Stitch took
+            # stitch: one archive from its private repo, found by its file name,
+            # its version read from the URL.
+            FORMULA_FILE="Formula/stitch-bash.rb"
+            SHA256="$PAYLOAD_SHA256"
+
+            if ! [[ $VERSION =~ ^[0-9]+\.[0-9]+\.[0-9]+$ && $SHA256 =~ ^[0-9a-f]{64}$ ]]; then
+              echo "Error: stitch-bash needs a version X.Y.Z and a sha256 of 64 hex digits; got '$VERSION', '$SHA256'"
+              exit 1
+            fi
+
+            RELEASE_URL="https://github.com/leeovery/stitch-bash/releases/download/v$VERSION/stitch-v$VERSION.tar.gz"
+            sed -i "s|^  url \"https://github.com/leeovery/stitch-bash/[^\"]*\",$|  url \"$RELEASE_URL\",|" $FORMULA_FILE
+            sed -i "s/^  sha256 \"[0-9a-f]*\"$/  sha256 \"$SHA256\"/" $FORMULA_FILE
+
+            if ! grep -qx "  url \"$RELEASE_URL\"," $FORMULA_FILE ||
+              ! grep -qx "  sha256 \"$SHA256\"" $FORMULA_FILE; then
+              echo "Error: $FORMULA_FILE has no url or sha256 line where the workflow looks for it"
+              exit 1
             fi
           elif [ "$TOOL" = "tick" ]; then
             FORMULA_FILE="Formula/tick.rb"
@@ -157,7 +188,7 @@ jobs:
               exit 1
             fi
           else
-            echo "Error: unsupported tool '$TOOL'. Supported tools: stitch, bash-toolkit, tick, portal, mint, switchboard, kit, sitrep"
+            echo "Error: unsupported tool '$TOOL'. Supported tools: stitch, stitch-bash, bash-toolkit, tick, portal, mint, switchboard, kit, sitrep"
             exit 1
           fi
 
@@ -177,6 +208,8 @@ jobs:
             git add Formula/bash-toolkit.rb
           elif [ "$TOOL" = "stitch" ]; then
             git add Formula/stitch.rb
+          elif [ "$TOOL" = "stitch-bash" ]; then
+            git add Formula/stitch-bash.rb
           elif [ "$TOOL" = "tick" ]; then
             git add Formula/tick.rb
           elif [ "$TOOL" = "portal" ]; then

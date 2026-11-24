@@ -16,6 +16,7 @@ brew install leeovery/tools/kit
 export HOMEBREW_GITHUB_API_TOKEN=your_token_here
 
 brew install leeovery/tools/stitch
+brew install leeovery/tools/stitch-bash
 brew install leeovery/tools/bash-toolkit
 
 # Casks (private, so the same token):
@@ -30,7 +31,8 @@ brew install --cask leeovery/tools/sitrep
 | `portal` | Interactive session picker for tmux | [leeovery/portal](https://github.com/leeovery/portal) | No (public) |
 | `switchboard` | Spread Claude Code sessions across several Claude subscriptions | [leeovery/switchboard](https://github.com/leeovery/switchboard) | No (public) |
 | `kit` | Set up a Mac from a config repository, and keep it that way | [leeovery/kit](https://github.com/leeovery/kit) | No (public) |
-| `stitch` | Multi-strategy release management CLI | [leeovery/stitch](https://github.com/leeovery/stitch) | Yes |
+| `stitch` | The shipping tool for you and your agents | [leeovery/stitch](https://github.com/leeovery/stitch) | Yes |
+| `stitch-bash` | The bash Stitch, run as `stitch-bash`, for apps still on the old platform | [leeovery/stitch-bash](https://github.com/leeovery/stitch-bash) | Yes |
 | `bash-toolkit` | Bash library for terminal messaging and UI | [leeovery/bash-toolkit](https://github.com/leeovery/bash-toolkit) | Yes |
 
 ## Available Casks
@@ -46,6 +48,7 @@ brew upgrade tick
 brew upgrade portal
 brew upgrade switchboard
 brew upgrade stitch
+brew upgrade stitch-bash
 brew upgrade bash-toolkit
 brew upgrade --cask sitrep
 ```

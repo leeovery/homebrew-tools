@@ -25,8 +25,14 @@ This file provides comprehensive context to Claude Code when working with the le
 ### Private (requires `HOMEBREW_GITHUB_API_TOKEN`)
 
 **Stitch** (`Formula/stitch.rb`)
-- Release management CLI (uses `GitHubPrivateRepositoryDownloadStrategy` + asset IDs)
+- The Go Stitch, the shipping tool (Go, dual-arch macOS binaries, `GitHubPrivateReleaseDownloadStrategy`)
+- Takes `version_scheme 1` in the commit after the workflow moves it to 0.1.0, never before: the scheme makes its own semver read as newer than the bash Stitch's 1.6.6, which this formula installed until then, so set at 0.0.2 it would upgrade every bash Stitch to an early build
 - `brew install leeovery/tools/stitch`
+
+**Stitch Bash** (`Formula/stitch-bash.rb`)
+- The bash Stitch, for apps still on the old platform, run as `stitch-bash` (`GitHubPrivateReleaseDownloadStrategy`)
+- Its script finds its library and templates beside itself, so all of it lives in `libexec`, behind a `stitch-bash` wrapper
+- `brew install leeovery/tools/stitch-bash`
 
 **Bash Toolkit** (`Formula/bash-toolkit.rb`)
 - Modular bash library for terminal messaging and UI (same private download strategy)
@@ -51,10 +57,15 @@ Two patterns exist:
 
 **Public tools (tick, portal, switchboard, mint):** Standard Homebrew formulas with dual-arch macOS support: `depends_on :macos`, then `on_arm` / `on_intel` blocks at the top level, each with its own URL and sha256. Not inside an `on_macos` block: Homebrew 7 checks a trusted tap's formulae for every OS and arch when it's tapped, and a formula with no URL on Linux fails it ("invalid syntax in tap!"). Updated via `sha256_arm64` / `sha256_amd64` in the dispatch payload.
 
-**Private tools (stitch, bash-toolkit):** Use a custom `GitHubPrivateRepositoryDownloadStrategy` to handle private repository access:
-- Requires `HOMEBREW_GITHUB_API_TOKEN` environment variable
-- Maps version numbers to GitHub release asset IDs
-- Falls back to standard download if token unavailable
+**Private tools (stitch, stitch-bash):** Use `GitHubPrivateReleaseDownloadStrategy`, defined in each formula:
+- Requires `HOMEBREW_GITHUB_API_TOKEN`; without it the download stops, saying so
+- Finds the asset by its file name in the release the URL names, through GitHub's API, so the formula keeps no asset IDs
+- Hands the token to curl on stdin (`--header @-`), so it never shows in a command line; `secrets:` redacts it from any output, and `--disable` keeps a `~/.curlrc` out
+- Raises `CurlDownloadStrategyError` on a failure, never `odie`, which Homebrew's download threads swallow as `Error: exit`
+- Both formulae hold the same strategy, so a change to it is made in both
+- stitch has `on_arm` / `on_intel` blocks as the public tools do, updated by `sha256_arm64` / `sha256_amd64` (press's payload); stitch-bash one archive, updated by `sha256`; the workflow refuses a payload without them
+
+**bash-toolkit** keeps the older `GitHubPrivateRepositoryDownloadStrategy`, which maps version numbers to GitHub release asset IDs and falls back to a plain download without a token.
 
 ### Automated Updates
 The repository uses GitHub Actions (`.github/workflows/update-formula.yml`) to automatically update formulas:
@@ -62,7 +73,7 @@ The repository uses GitHub Actions (`.github/workflows/update-formula.yml`) to a
 1. **Trigger**: Repository dispatch events from source repositories
 2. **Payload**: Includes tool name, version, SHA256, asset ID, and download URL
 3. **Process**: Updates appropriate formula file and commits changes
-4. **Support**: Handles `stitch`, `bash-toolkit`, `tick`, `portal`, `mint`, `switchboard` and `sitrep` via tool parameter
+4. **Support**: Handles `stitch`, `stitch-bash`, `bash-toolkit`, `tick`, `portal`, `mint`, `switchboard` and `sitrep` via tool parameter
 5. **One at a time**: a `concurrency` group queues a dispatch behind one running, so two can't race each other's `git push`; a run times out after 5 minutes
 6. **Named by its payload**: `run-name` makes each run "Update <tool> to v<version>", so a sender waiting on its run (`press upload`, which kit, mint, switchboard and sitrep release through) tells it from another tool's that started beside it; keep the name as it is, or change the sender with it
 
@@ -128,7 +139,8 @@ brew audit --cask --strict <tap>/[cask-name]
 
 - `Formula/tick.rb` - Tick formula (public, dual-arch macOS)
 - `Formula/portal.rb` - Portal formula (public, dual-arch macOS)
-- `Formula/stitch.rb` - Stitch formula (private, custom download strategy)
+- `Formula/stitch.rb` - Stitch formula, the Go Stitch (private, dual-arch macOS, custom download strategy)
+- `Formula/stitch-bash.rb` - Stitch Bash formula, the bash Stitch as `stitch-bash` (private, custom download strategy)
 - `Formula/bash-toolkit.rb` - Bash Toolkit formula (private, custom download strategy)
 - `Casks/sitrep.rb` - SitRep cask (public, its release's zip by version in the url)
 - `.github/workflows/update-formula.yml` - Automated formula update workflow
@@ -136,8 +148,8 @@ brew audit --cask --strict <tap>/[cask-name]
 
 ## Important Notes
 
-- Private tools (stitch, bash-toolkit) require authentication; public tools (tick, portal) do not
-- Asset IDs must be updated in private formulas when new releases are created
+- Private tools (stitch, stitch-bash, bash-toolkit) require authentication; public tools (tick, portal) do not
+- bash-toolkit's asset IDs are updated by the workflow on each release; stitch and stitch-bash keep none
 - The custom download strategy is essential for private repository access
 - Public formulas use dual-arch sha256 checksums instead of asset IDs
 - Workflow updates all formulas based on the tool parameter in the payload

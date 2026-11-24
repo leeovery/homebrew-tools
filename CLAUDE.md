@@ -26,7 +26,7 @@ This file provides comprehensive context to Claude Code when working with the le
 
 **Stitch** (`Formula/stitch.rb`)
 - The Go Stitch, the shipping tool (Go, dual-arch macOS binaries, `GitHubPrivateReleaseDownloadStrategy`)
-- `version_scheme 1`, so its own semver from 0.1.0 reads as newer than the bash Stitch's 1.6.6, which this formula installed until then
+- Takes `version_scheme 1` in the commit after the workflow moves it to 0.1.0, never before: the scheme makes its own semver read as newer than the bash Stitch's 1.6.6, which this formula installed until then, so set at 0.0.2 it would upgrade every bash Stitch to an early build
 - `brew install leeovery/tools/stitch`
 
 **Stitch Bash** (`Formula/stitch-bash.rb`)
@@ -60,8 +60,10 @@ Two patterns exist:
 **Private tools (stitch, stitch-bash):** Use `GitHubPrivateReleaseDownloadStrategy`, defined in each formula:
 - Requires `HOMEBREW_GITHUB_API_TOKEN`; without it the download stops, saying so
 - Finds the asset by its file name in the release the URL names, through GitHub's API, so the formula keeps no asset IDs
-- Hands the token to curl on stdin (`--header @-`), so it never shows in a command line; `secrets:` redacts it from any output
-- stitch has `on_arm` / `on_intel` blocks as the public tools do, updated by `sha256_arm64` / `sha256_amd64` (press's payload); stitch-bash one archive, updated by `sha256`
+- Hands the token to curl on stdin (`--header @-`), so it never shows in a command line; `secrets:` redacts it from any output, and `--disable` keeps a `~/.curlrc` out
+- Raises `CurlDownloadStrategyError` on a failure, never `odie`, which Homebrew's download threads swallow as `Error: exit`
+- Both formulae hold the same strategy, so a change to it is made in both
+- stitch has `on_arm` / `on_intel` blocks as the public tools do, updated by `sha256_arm64` / `sha256_amd64` (press's payload); stitch-bash one archive, updated by `sha256`; the workflow refuses a payload without them
 
 **bash-toolkit** keeps the older `GitHubPrivateRepositoryDownloadStrategy`, which maps version numbers to GitHub release asset IDs and falls back to a plain download without a token.
 

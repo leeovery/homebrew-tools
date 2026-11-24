@@ -80,13 +80,6 @@ class Stitch < Formula
     bin.install "stitch"
   end
 
-  def caveats
-    <<~EOS
-      stitch is the Go Stitch, for apps on the new platform. The bash Stitch,
-      for the apps still on the old one, is stitch-bash:
-        brew install leeovery/tools/stitch-bash
-    EOS
-  end
 
   test do
     assert_match version.to_s, shell_output("#{bin}/stitch --version")

@@ -81,13 +81,6 @@ class StitchBash < Formula
     (bin/"stitch-bash").chmod 0755
   end
 
-  def caveats
-    <<~EOS
-      The bash Stitch runs as stitch-bash, for the apps still on the old
-      platform; its messages still say stitch. stitch is the Go Stitch:
-        brew install leeovery/tools/stitch
-    EOS
-  end
 
   test do
     system bin/"stitch-bash", "--version"

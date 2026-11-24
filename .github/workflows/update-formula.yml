@@ -63,22 +63,26 @@ jobs:
               sed -i "/asset_ids = {/a\\      \"$VERSION\" => \"$ASSET_ID\"," $FORMULA_FILE
             fi
           elif [ "$TOOL" = "stitch" ]; then
+            # The Go Stitch: an archive for each chip from its private repo,
+            # each found by its file name in the release, so only the version
+            # and the two sha256s change. Each sha256 is the first after its
+            # url, which runs onto a line of its own for the download strategy.
             FORMULA_FILE="Formula/stitch.rb"
-            REPO="leeovery/stitch-bash"
-            SHA256="${{ github.event.client_payload.sha256 }}"
-            ASSET_ID="${{ github.event.client_payload.asset_id }}"
-
-            RELEASE_URL="https://github.com/$REPO/releases/download/v$VERSION/$TOOL-v$VERSION.tar.gz"
+            SHA256_ARM64="${{ github.event.client_payload.sha256_arm64 }}"
+            SHA256_AMD64="${{ github.event.client_payload.sha256_amd64 }}"
 
             sed -i "s/version \".*\"/version \"$VERSION\"/" $FORMULA_FILE
+            sed -i "/darwin_arm64/,/sha256/ s/sha256 \".*\"/sha256 \"$SHA256_ARM64\"/" $FORMULA_FILE
+            sed -i "/darwin_amd64/,/sha256/ s/sha256 \".*\"/sha256 \"$SHA256_AMD64\"/" $FORMULA_FILE
+          elif [ "$TOOL" = "stitch-bash" ]; then
+            # The bash Stitch, under its own name since the Go Stitch took
+            # stitch: one archive from its private repo, found by its file name.
+            FORMULA_FILE="Formula/stitch-bash.rb"
+            SHA256="${{ github.event.client_payload.sha256 }}"
+            RELEASE_URL="https://github.com/leeovery/stitch-bash/releases/download/v$VERSION/stitch-v$VERSION.tar.gz"
+
             sed -i "s|url \".*\"|url \"$RELEASE_URL\"|" $FORMULA_FILE
             sed -i "s/sha256 \".*\"/sha256 \"$SHA256\"/" $FORMULA_FILE
-
-            if grep -q "\"$VERSION\" =>" $FORMULA_FILE; then
-              sed -i "s/\"$VERSION\" => \"[^\"]*\"/\"$VERSION\" => \"$ASSET_ID\"/" $FORMULA_FILE
-            else
-              sed -i "/asset_ids = {/a\\      \"$VERSION\" => \"$ASSET_ID\"," $FORMULA_FILE
-            fi
           elif [ "$TOOL" = "tick" ]; then
             FORMULA_FILE="Formula/tick.rb"
             SHA256_ARM64="${{ github.event.client_payload.sha256_arm64 }}"
@@ -157,7 +161,7 @@ jobs:
               exit 1
             fi
           else
-            echo "Error: unsupported tool '$TOOL'. Supported tools: stitch, bash-toolkit, tick, portal, mint, switchboard, kit, sitrep"
+            echo "Error: unsupported tool '$TOOL'. Supported tools: stitch, stitch-bash, bash-toolkit, tick, portal, mint, switchboard, kit, sitrep"
             exit 1
           fi
 
@@ -177,6 +181,8 @@ jobs:
             git add Formula/bash-toolkit.rb
           elif [ "$TOOL" = "stitch" ]; then
             git add Formula/stitch.rb
+          elif [ "$TOOL" = "stitch-bash" ]; then
+            git add Formula/stitch-bash.rb
           elif [ "$TOOL" = "tick" ]; then
             git add Formula/tick.rb
           elif [ "$TOOL" = "portal" ]; then

@@ -1,208 +1,72 @@
-class GitHubPrivateRepositoryDownloadStrategy < CurlDownloadStrategy
+# Downloads a release asset of a private repository through GitHub's API, with
+# HOMEBREW_GITHUB_API_TOKEN. It finds the asset by its file name in the release
+# the URL names, so no asset id is kept here, and it hands the token to curl on
+# stdin, so it never shows in a command line.
+class GitHubPrivateReleaseDownloadStrategy < CurlDownloadStrategy
+  RELEASE_URL = %r{\Ahttps://github\.com/([^/]+/[^/]+)/releases/download/([^/]+)/([^/]+)\z}
+
   def _fetch(url:, resolved_url:, timeout:)
-    if ENV["HOMEBREW_GITHUB_API_TOKEN"] && url.include?("/releases/download/")
-      # Convert GitHub release download URL to API asset URL
-      asset_id = get_asset_id(url)
-      if asset_id
-        api_url = "https://api.github.com/repos/leeovery/stitch-bash/releases/assets/#{asset_id}"
-        curl_args = ["--location", "--remote-time", "--output", temporary_path]
-        curl_args += ["--header", "Authorization: token #{ENV["HOMEBREW_GITHUB_API_TOKEN"]}"]
-        curl_args += ["--header", "Accept: application/octet-stream"]
-        curl_args << api_url
+    token = ENV.fetch("HOMEBREW_GITHUB_API_TOKEN", "")
+    repo, tag, name = url.match(RELEASE_URL)&.captures
+    odie "#{url} isn't a GitHub release download" unless repo
+    odie "#{repo} is private: set HOMEBREW_GITHUB_API_TOKEN to a token that can read it" if token.empty?
 
-        system_command!("curl", args: curl_args, env: { "HOMEBREW_CURL_RETRIES" => "3" })
-        return
-      end
-    end
+    auth = ["--header", "@-"]
+    release = system_command!(
+      "curl",
+      args:         ["--silent", "--show-error", "--fail", "--location", *auth,
+                     "--header", "Accept: application/vnd.github+json",
+                     "https://api.github.com/repos/#{repo}/releases/tags/#{tag}"],
+      input:        "Authorization: Bearer #{token}\n",
+      print_stderr: false,
+      secrets:      [token],
+    ).stdout
+    asset = JSON.parse(release).fetch("assets", []).find { |a| a["name"] == name }
+    odie "#{repo}'s release #{tag} has no #{name}" unless asset
 
-    # Fallback to regular download
-    super
-  end
-
-  private
-
-  def get_asset_id(url)
-    # Extract version from URL
-    version_match = url.match(/\/v(\d+\.\d+\.\d+)\//)
-    return nil unless version_match
-
-    version = version_match[1]
-
-    # Map versions to asset IDs (updated by automation)
-    asset_ids = {
-      "1.6.6" => "662761836",
-      "1.6.5" => "483832516",
-      "1.6.4" => "456505901",
-      "1.6.3" => "454572303",
-      "1.6.2" => "454569452",
-      "1.6.1" => "442587479",
-      "1.6.0" => "435272673",
-      "1.5.37" => "386407345",
-      "1.5.36" => "367479620",
-      "1.5.35" => "366774734",
-      "1.5.34" => "365331873",
-      "1.5.33" => "361555646",
-      "1.5.32" => "361453305",
-      "1.5.31" => "360786726",
-      "1.5.30" => "359181531",
-      "1.5.29" => "358463891",
-      "1.5.28" => "358023421",
-      "1.5.27" => "354738716",
-      "1.5.26" => "354314983",
-      "1.5.25" => "354263819",
-      "1.5.24" => "354243137",
-      "1.5.23" => "353175628",
-      "1.5.22" => "353168250",
-      "1.5.21" => "353067459",
-      "1.5.20" => "346123088",
-      "1.5.19" => "343792571",
-      "1.5.18" => "341481786",
-      "1.5.17" => "341036013",
-      "1.5.16" => "341034268",
-      "1.5.15" => "341015289",
-      "1.5.14" => "338390445",
-      "1.5.13" => "337444016",
-      "1.5.12" => "337021441",
-      "1.5.11" => "337002134",
-      "1.5.10" => "336602466",
-      "1.5.9" => "330616475",
-      "1.5.8" => "330614426",
-      "1.5.7" => "329418441",
-      "1.5.6" => "328978868",
-      "1.5.4" => "328859186",
-      "1.5.3" => "327925082",
-      "1.5.2" => "327443600",
-      "1.5.1" => "327442152",
-      "1.5.0" => "327439189",
-      "1.4.8" => "326886668",
-      "1.4.7" => "326474689",
-      "1.4.6" => "326456793",
-      "1.4.4" => "325993047",
-      "1.4.3" => "325990572",
-      "1.4.2" => "325904811",
-      "1.4.1" => "325903270",
-      "1.4.0" => "325901612",
-      "1.3.13" => "324390682",
-      "1.3.12" => "324385088",
-      "1.3.11" => "324381552",
-      "1.3.10" => "324378486",
-      "1.3.9" => "324375807",
-      "1.3.8" => "324374899",
-      "1.3.7" => "324367272",
-      "1.3.6" => "324359399",
-      "1.3.5" => "324353160",
-      "1.3.4" => "324351686",
-      "1.3.3" => "324307241",
-      "1.3.2" => "324251567",
-      "1.3.1" => "323947431",
-      "1.3.0" => "323947178",
-      "1.2.39" => "322957972",
-      "1.2.38" => "322939865",
-      "1.2.37" => "321951521",
-      "1.2.36" => "321946470",
-      "1.2.35" => "321931809",
-      "1.2.34" => "321923982",
-      "1.2.33" => "321914939",
-      "1.2.32" => "321554986",
-      "1.2.31" => "321551861",
-      "1.2.30" => "321544084",
-      "1.2.29" => "321508409",
-      "1.2.28" => "321505547",
-      "1.2.27" => "321504510",
-      "1.2.26" => "321463258",
-      "1.2.25" => "321463139",
-      "1.2.24" => "321461244",
-      "1.2.23" => "321452029",
-      "1.2.22" => "321084264",
-      "1.2.21" => "320687252",
-      "1.2.20" => "320607942",
-      "1.2.19" => "320329414",
-      "1.2.18" => "320302390",
-      "1.2.17" => "320287140",
-      "1.2.16" => "320263468",
-      "1.2.15" => "320248529",
-      "1.2.14" => "320239412",
-      "1.2.13" => "320234702",
-      "1.2.12" => "320224405",
-      "1.2.11" => "319304338",
-      "1.2.10" => "319243104",
-      "1.2.9" => "318873975",
-      "1.2.8" => "318873313",
-      "1.2.7" => "318873019",
-      "1.2.6" => "318870393",
-      "1.2.5" => "318868629",
-      "1.2.4" => "318859491",
-      "1.2.3" => "318825050",
-      "1.2.2" => "318822741",
-      "1.2.1" => "318755054",
-      "1.2.0" => "318425650",
-      "1.1.12" => "318424638",
-      "1.1.11" => "316477984",
-      "1.1.10" => "316025651",
-      "1.1.9" => "315061483",
-      "1.1.8" => "313813426",
-      "1.1.7" => "313787432",
-      "1.1.6" => "313753816",
-      "1.1.5" => "313741756",
-      "1.1.4" => "313366218",
-      "1.1.3" => "312447488",
-      "1.1.2" => "311575992",
-      "1.1.1" => "311290245",
-      "1.1.0" => "311289918",
-      "1.0.5" => "311285078",
-      "1.0.4" => "311273058",
-      "1.0.3" => "311028474",
-      "1.0.2" => "310944941",
-      "1.0.1" => "310520870",
-      "1.0.0" => "310517125",
-      "0.0.14" => "282841990",
-      "0.0.13" => "282841922",
-      "0.0.12" => "282841777",
-      "0.0.11" => "282839271",
-      "0.0.10" => "282838303",
-      "0.0.9" => "282831274"
-    }
-
-    asset_ids[version]
+    system_command!(
+      "curl",
+      args:    ["--location", "--fail", "--remote-time", "--output", temporary_path, *auth,
+                "--header", "Accept: application/octet-stream", asset["url"]],
+      input:   "Authorization: Bearer #{token}\n",
+      env:     { "HOMEBREW_CURL_RETRIES" => "3" },
+      secrets: [token],
+    )
   end
 end
 
 class Stitch < Formula
-  desc "Release management CLI for coordinated feature releases"
-  homepage "https://github.com/leeovery/stitch-bash"
-  url "https://github.com/leeovery/stitch-bash/releases/download/v1.6.6/stitch-v1.6.6.tar.gz", using: GitHubPrivateRepositoryDownloadStrategy
-  sha256 "03b28de7b4db1c9af77132b8f4b6e243f8ca8f3e58e3b572984f30fbc0e0d262"
-  version "1.6.6"
+  desc "Shipping tool for you and your agents"
+  homepage "https://github.com/leeovery/stitch"
+  version "0.0.2"
+  license "MIT"
 
-  depends_on "git"
-  depends_on "bash-toolkit"
+  depends_on :macos
+
+  on_arm do
+    url "https://github.com/leeovery/stitch/releases/download/v#{version}/stitch_#{version}_darwin_arm64.tar.gz",
+        using: GitHubPrivateReleaseDownloadStrategy
+    sha256 "17332dba6e5365d5d27387883bc67317d677123df0c7ed2e1776efccd4e7e172"
+  end
+  on_intel do
+    url "https://github.com/leeovery/stitch/releases/download/v#{version}/stitch_#{version}_darwin_amd64.tar.gz",
+        using: GitHubPrivateReleaseDownloadStrategy
+    sha256 "a24ae37604efeddec25809eecc2f9b62795a32bdc736ff6840686a6c31daeaed"
+  end
 
   def install
-    bin.install "bin/stitch"
-    lib.install Dir["lib/*"]
-    share.install "templates"
+    bin.install "stitch"
   end
 
   def caveats
     <<~EOS
-    ---------------------------------------------------------
-      Stitch has been installed!
-
-      To get started:
-        cd your-project
-        stitch init
-
-      Optional dependencies for full functionality:
-
-        brew install claude      # Claude AI for release notes
-
-      For more information:
-        stitch help
-    ---------------------------------------------------------
+      stitch is the Go Stitch, for apps on the new platform. The bash Stitch,
+      for the apps still on the old one, is stitch-bash:
+        brew install leeovery/tools/stitch-bash
     EOS
   end
 
   test do
-    system "#{bin}/stitch", "--version"
+    assert_match version.to_s, shell_output("#{bin}/stitch --version")
   end
 end

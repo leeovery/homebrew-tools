@@ -26,7 +26,7 @@ This file provides comprehensive context to Claude Code when working with the le
 
 **Stitch** (`Formula/stitch.rb`)
 - The Go Stitch, the shipping tool (Go, dual-arch macOS binaries, `GitHubPrivateReleaseDownloadStrategy`)
-- Takes `version_scheme 1` in the commit after the workflow moves it to 0.1.0, never before: the scheme makes its own semver read as newer than the bash Stitch's 1.6.6, which this formula installed until then, so set at 0.0.2 it would upgrade every bash Stitch to an early build
+- `version_scheme 1`, from 0.1.0, so its own semver reads as newer than the bash Stitch's 1.6.6, which this formula installed until then; the workflow's edits leave it as it is
 - `brew install leeovery/tools/stitch`
 
 **Stitch Bash** (`Formula/stitch-bash.rb`)

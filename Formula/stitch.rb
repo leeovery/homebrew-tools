@@ -60,6 +60,7 @@ class Stitch < Formula
   desc "Shipping tool for you and your agents"
   homepage "https://github.com/leeovery/stitch"
   version "0.1.0"
+  version_scheme 1
   license "MIT"
 
   depends_on :macos

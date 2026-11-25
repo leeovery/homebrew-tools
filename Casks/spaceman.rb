@@ -1,6 +1,6 @@
 cask "spaceman" do
-  version "0.0.0"
-  sha256 "0000000000000000000000000000000000000000000000000000000000000000"
+  version "2.0.0"
+  sha256 "b9e9729e66957c979121c93cb4aa627a0c53c5a07e5e4a932cf093b7ef1ea185"
 
   # The zip press upload uploads, named by [package] name in spaceman's
   # .press.toml.

@@ -10,6 +10,8 @@ brew install leeovery/tools/tick
 brew install leeovery/tools/portal
 brew install leeovery/tools/switchboard
 brew install leeovery/tools/kit
+brew install --cask leeovery/tools/sitrep
+brew install --cask leeovery/tools/spaceman
 
 # Private tools require a GitHub Personal Access Token with 'repo' scope:
 #   https://github.com/settings/tokens
@@ -18,9 +20,6 @@ export HOMEBREW_GITHUB_API_TOKEN=your_token_here
 brew install leeovery/tools/stitch
 brew install leeovery/tools/stitch-bash
 brew install leeovery/tools/bash-toolkit
-
-# Casks (private, so the same token):
-brew install --cask leeovery/tools/sitrep
 ```
 
 ## Available Formulas
@@ -39,7 +38,8 @@ brew install --cask leeovery/tools/sitrep
 
 | Cask | Description | Repository | Auth Required |
 |------|-------------|------------|---------------|
-| `sitrep` | SitRep, the menu bar board for Claude Code sessions, carrying the sitrep plugin (Apple silicon, macOS 14+) | [leeovery/sitrep](https://github.com/leeovery/sitrep) | Yes |
+| `sitrep` | SitRep, the menu bar board for Claude Code sessions, carrying the sitrep plugin (Apple silicon, macOS 14+) | [leeovery/sitrep](https://github.com/leeovery/sitrep) | No (public) |
+| `spaceman` | Spaceman, spaces in the menu bar, named in Mission Control (universal, macOS 26+) | [leeovery/spaceman](https://github.com/leeovery/spaceman) | No (public) |
 
 ## Updating
 
@@ -51,6 +51,7 @@ brew upgrade stitch
 brew upgrade stitch-bash
 brew upgrade bash-toolkit
 brew upgrade --cask sitrep
+brew upgrade --cask spaceman
 ```
 
 Formulas and casks auto-update via GitHub Actions when new releases are published.

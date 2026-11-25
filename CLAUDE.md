@@ -50,6 +50,15 @@ This file provides comprehensive context to Claude Code when working with the le
 - Updated by the workflow: `tool=sitrep` with `version` and `sha256`, dispatched by `press upload` after each upload of the latest release, which then waits on the workflow's run. The workflow checks them against `X.Y.Z` and 64 hex digits before it writes them, each to its own line of the cask, and commits "Update sitrep cask to v…"
 - `brew install --cask leeovery/tools/sitrep`
 
+**Spaceman** (`Casks/spaceman.rb`)
+- The Spaceman menu bar app, which shows and names Spaces (Swift, universal arm64 and x86_64, macOS 26 Tahoe+; bundle id `com.leeovery.Spaceman`)
+- Public: downloads the release's zip from its public URL, `https://github.com/leeovery/spaceman/releases/download/v<version>/Spaceman-<version>.zip`, named by `[package] name` in spaceman's `.press.toml`, with no token and no download strategy of its own
+- `auto_updates` unset, so `brew upgrade` updates the app; `livecheck` reads GitHub's latest release
+- `uninstall quit:` the app. No `binary` and no `postflight`
+- Committed with `version "0.0.0"` and a sha256 of 64 zeros as placeholders: the first release's dispatch writes the real values
+- Updated by the workflow: `tool=spaceman` with `version` and `sha256`, dispatched by `press upload`. The workflow checks them against `X.Y.Z` and 64 hex digits before it writes them, each to its own line of the cask, and commits "Update spaceman cask to v…"
+- `brew install --cask leeovery/tools/spaceman`
+
 ## Architecture
 
 ### Formula Structure
@@ -73,9 +82,9 @@ The repository uses GitHub Actions (`.github/workflows/update-formula.yml`) to a
 1. **Trigger**: Repository dispatch events from source repositories
 2. **Payload**: Includes tool name, version, SHA256, asset ID, and download URL
 3. **Process**: Updates appropriate formula file and commits changes
-4. **Support**: Handles `stitch`, `stitch-bash`, `bash-toolkit`, `tick`, `portal`, `mint`, `switchboard` and `sitrep` via tool parameter
+4. **Support**: Handles `stitch`, `stitch-bash`, `bash-toolkit`, `tick`, `portal`, `mint`, `switchboard`, `sitrep` and `spaceman` via tool parameter
 5. **One at a time**: a `concurrency` group queues a dispatch behind one running, so two can't race each other's `git push`; a run times out after 5 minutes
-6. **Named by its payload**: `run-name` makes each run "Update <tool> to v<version>", so a sender waiting on its run (`press upload`, which kit, mint, switchboard and sitrep release through) tells it from another tool's that started beside it; keep the name as it is, or change the sender with it
+6. **Named by its payload**: `run-name` makes each run "Update <tool> to v<version>", so a sender waiting on its run (`press upload`, which kit, mint, switchboard, sitrep and spaceman release through) tells it from another tool's that started beside it; keep the name as it is, or change the sender with it
 
 ## Workflow Integration
 
@@ -143,6 +152,7 @@ brew audit --cask --strict <tap>/[cask-name]
 - `Formula/stitch-bash.rb` - Stitch Bash formula, the bash Stitch as `stitch-bash` (private, custom download strategy)
 - `Formula/bash-toolkit.rb` - Bash Toolkit formula (private, custom download strategy)
 - `Casks/sitrep.rb` - SitRep cask (public, its release's zip by version in the url)
+- `Casks/spaceman.rb` - Spaceman cask (public, its release's zip by version in the url)
 - `.github/workflows/update-formula.yml` - Automated formula update workflow
 - `README.md` - Main documentation with installation instructions
 

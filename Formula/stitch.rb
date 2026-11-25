@@ -59,7 +59,7 @@ end
 class Stitch < Formula
   desc "Shipping tool for you and your agents"
   homepage "https://github.com/leeovery/stitch"
-  version "0.1.1"
+  version "0.1.2"
   version_scheme 1
   license "MIT"
 
@@ -68,12 +68,12 @@ class Stitch < Formula
   on_arm do
     url "https://github.com/leeovery/stitch/releases/download/v#{version}/stitch_#{version}_darwin_arm64.tar.gz",
         using: GitHubPrivateReleaseDownloadStrategy
-    sha256 "e992f2f33f59978909815040eb831009d4710e7f01592ce735a1550eaaa49d38"
+    sha256 "b205d4adf9529a70d019e4500aebf3e0894e475cdcc82925ed60e949c9494e70"
   end
   on_intel do
     url "https://github.com/leeovery/stitch/releases/download/v#{version}/stitch_#{version}_darwin_amd64.tar.gz",
         using: GitHubPrivateReleaseDownloadStrategy
-    sha256 "1b0d84c1bca928076f6550d2042a402ff993bba63130f4abbbf9f988d114da2d"
+    sha256 "5cf5a2e4f1b6cb40f5834c5b5f46abaf1e024b61ecd252c2a82e5d7d884ade38"
   end
 
   def install

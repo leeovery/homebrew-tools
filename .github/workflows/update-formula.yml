@@ -1,7 +1,7 @@
 name: Update Formula
 # Names each run by its payload, so a sender (press upload, which kit,
-# mint, switchboard and sitrep release through) can tell its own run from
-# another tool's that started beside it.
+# mint, switchboard, sitrep and spaceman release through) can tell its own
+# run from another tool's that started beside it.
 run-name: Update ${{ github.event.client_payload.tool }} to v${{ github.event.client_payload.version }}
 
 on:
@@ -187,8 +187,25 @@ jobs:
               echo "Error: $FORMULA_FILE has no version or sha256 line where the workflow looks for it"
               exit 1
             fi
+          elif [ "$TOOL" = "spaceman" ]; then
+            FORMULA_FILE="Casks/spaceman.rb"
+            SHA256="$PAYLOAD_SHA256"
+
+            if ! [[ $VERSION =~ ^[0-9]+\.[0-9]+\.[0-9]+$ && $SHA256 =~ ^[0-9a-f]{64}$ ]]; then
+              echo "Error: spaceman needs a version X.Y.Z and a sha256 of 64 hex digits; got '$VERSION', '$SHA256'"
+              exit 1
+            fi
+
+            sed -i "s/^  version \"[0-9.]*\"$/  version \"$VERSION\"/" $FORMULA_FILE
+            sed -i "s/^  sha256 \"[0-9a-f]*\"$/  sha256 \"$SHA256\"/" $FORMULA_FILE
+
+            if ! grep -qx "  version \"$VERSION\"" $FORMULA_FILE ||
+              ! grep -qx "  sha256 \"$SHA256\"" $FORMULA_FILE; then
+              echo "Error: $FORMULA_FILE has no version or sha256 line where the workflow looks for it"
+              exit 1
+            fi
           else
-            echo "Error: unsupported tool '$TOOL'. Supported tools: stitch, stitch-bash, bash-toolkit, tick, portal, mint, switchboard, kit, sitrep"
+            echo "Error: unsupported tool '$TOOL'. Supported tools: stitch, stitch-bash, bash-toolkit, tick, portal, mint, switchboard, kit, sitrep, spaceman"
             exit 1
           fi
 
@@ -222,6 +239,9 @@ jobs:
             git add Formula/kit.rb
           elif [ "$TOOL" = "sitrep" ]; then
             git add Casks/sitrep.rb
+            MESSAGE="Update $TOOL cask to v$VERSION"
+          elif [ "$TOOL" = "spaceman" ]; then
+            git add Casks/spaceman.rb
             MESSAGE="Update $TOOL cask to v$VERSION"
           fi
 

@@ -1,0 +1,186 @@
+#!/usr/bin/env bash
+# Checks a formula or cask that press sent whole, and writes it to the tap
+# checked out in the current directory. It knows no tool: the payload comes
+# through the environment (TOOL, KIND, VERSION, CONTENT, CONTENT_SHA256,
+# DRY_RUN), and the file it writes is derived from TOOL and KIND alone.
+# WRITE_FORMULA_BACKOFF, seconds, scales the wait between push attempts.
+set -euo pipefail
+
+fail() {
+  echo "write-formula: $*" >&2
+  exit 1
+}
+
+upper() {
+  printf '%s' "$1" | tr '[:lower:]' '[:upper:]'
+}
+
+# Homebrew's own derivation (Formulary.class_s) for the names TOOL allows:
+# the first letter and each letter or digit after a dash made upper case,
+# that dash dropped.
+class_name() {
+  local name=$1 out="" i
+  for ((i = 0; i < ${#name}; i++)); do
+    if [[ ${name:i:1} == - && ${name:i+1:1} == [a-z0-9] ]]; then
+      i=$((i + 1))
+      out+=$(upper "${name:i:1}")
+    else
+      out+=${name:i:1}
+    fi
+  done
+  printf '%s%s' "$(upper "${out:0:1}")" "${out:1}"
+}
+
+check_payload() {
+  [[ ${TOOL:-} =~ ^[a-z0-9][a-z0-9-]*$ ]] ||
+    fail "the tool \"${TOOL:-}\" isn't a tap name: lower-case letters, digits and dashes, starting with a letter or digit."
+  [[ ${KIND:-} == formula || ${KIND:-} == cask ]] ||
+    fail "the kind \"${KIND:-}\" is neither formula nor cask."
+  [[ ${VERSION:-} =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]] ||
+    fail "the version \"${VERSION:-}\" isn't X.Y.Z: the tap takes no pre-release."
+  [[ ${CONTENT_SHA256:-} =~ ^[0-9a-f]{64}$ ]] ||
+    fail "the content's sha256 \"${CONTENT_SHA256:-}\" isn't 64 lower-case hex digits."
+  [[ -z ${DRY_RUN:-} || $DRY_RUN == true || $DRY_RUN == false ]] ||
+    fail "dry_run \"$DRY_RUN\" is neither true nor false."
+}
+
+folder() { # kind
+  case $1 in
+    formula) echo Formula ;;
+    cask) echo Casks ;;
+  esac
+}
+
+other_kind() {
+  case $KIND in
+    formula) echo cask ;;
+    cask) echo formula ;;
+  esac
+}
+
+target_file() {
+  echo "$(folder "$KIND")/$TOOL.rb"
+}
+
+other_file() {
+  echo "$(folder "$(other_kind)")/$TOOL.rb"
+}
+
+decode_content() {
+  local out=$1 sum
+  printf '%s' "${CONTENT:-}" | base64 -d >"$out" 2>/dev/null ||
+    fail "the content isn't valid base64."
+  sum=$(sha256sum "$out" | cut -d' ' -f1)
+  [[ $sum == "$CONTENT_SHA256" ]] ||
+    fail "the content's sha256 is $sum, not the $CONTENT_SHA256 sent with it."
+}
+
+check_content() {
+  local file=$1 class syntax
+  grep -qxF "  version \"$VERSION\"" "$file" ||
+    fail "the $KIND has no line 'version \"$VERSION\"' for the version sent."
+  if [[ $KIND == formula ]]; then
+    class=$(class_name "$TOOL")
+    if ! [[ $class =~ ^[A-Z][A-Za-z0-9]*$ ]] || ! grep -qxF "class $class < Formula" "$file"; then
+      fail "the formula has no line 'class $class < Formula' for the tool $TOOL."
+    fi
+  else
+    grep -qxF "cask \"$TOOL\" do" "$file" ||
+      fail "the cask has no line 'cask \"$TOOL\" do' for the tool $TOOL."
+  fi
+  syntax=$(ruby -c "$file" 2>&1) ||
+    fail "the $KIND isn't valid Ruby: $syntax"
+}
+
+# The tap's main as it is now, never the commit the dispatch fired at: a
+# run that waited, or lost a push, would otherwise write onto a stale tree.
+# The content is the whole file and final, so there is nothing to merge.
+sync_to_tip() {
+  git fetch -q origin main || fail "couldn't fetch main from origin."
+  git reset -q --hard FETCH_HEAD
+}
+
+check_tree() {
+  local file=$1 other current newest
+  other=$(other_file)
+  [[ ! -e $other ]] ||
+    fail "$other is in the way: the tap holds $TOOL as a $(other_kind), so it can't take it as a $KIND too."
+  [[ -f $file ]] || return 0
+  current=$(sed -n 's/^  version "\([^"]*\)"$/\1/p' "$file" | head -n 1)
+  [[ -n $current && $current != "$VERSION" ]] || return 0
+  newest=$(printf '%s\n' "$current" "$VERSION" | sort -V | tail -n 1)
+  [[ $newest != "$current" ]] ||
+    fail "$file holds $current, newer than $VERSION: the tap never goes back a version."
+}
+
+show_diff() {
+  local file=$1 new=$2 current=/dev/null from=/dev/null status=0
+  if [[ -f $file ]]; then
+    current=$file
+    from="a/$file"
+  fi
+  echo "Dry run: $file would change as follows; nothing is written."
+  diff -u --label "$from" --label "b/$file" "$current" "$new" || status=$?
+  ((status <= 1)) || fail "couldn't compare $file with the content sent."
+}
+
+# Pushes the commit to main. Returns 1 when main moved on, the push refused
+# as no fast-forward; any other failure (auth, network, a protected branch)
+# fails at once, in git's own words.
+push_main() {
+  local file=$1 out status=0
+  out=$(git push --porcelain origin HEAD:main 2>&1) || status=$?
+  ((status != 0)) || return 0
+  if grep -qE '^!.*\[rejected\] \((fetch first|non-fast-forward)\)$' <<<"$out"; then
+    return 1
+  fi
+  fail "couldn't push $file to main: $out"
+}
+
+# Writes the file onto main's tip and pushes it. A push refused because main
+# moved on starts again from the new tip, up to five times, each wait longer
+# and jittered so runs that collided don't retry in step.
+publish() {
+  local file=$1 new=$2 attempts=5 backoff=${WRITE_FORMULA_BACKOFF:-2} attempt
+  git config --local user.email "action@github.com"
+  git config --local user.name "GitHub Action"
+  for ((attempt = 1; attempt <= attempts; attempt++)); do
+    if ((attempt > 1)); then
+      sleep $(((attempt - 1) * backoff + RANDOM % (backoff + 1)))
+      sync_to_tip
+      check_tree "$file"
+    fi
+    mkdir -p "$(dirname "$file")"
+    cp "$new" "$file"
+    git add "$file"
+    if git diff --cached --quiet; then
+      echo "$file already reads as sent: nothing to commit."
+      return
+    fi
+    git commit -q -m "Update $TOOL $KIND to v$VERSION"
+    if push_main "$file"; then
+      echo "Wrote $file for $TOOL v$VERSION."
+      return
+    fi
+  done
+  fail "the push of $file to main was refused $attempts times, main having moved on before each; a new dispatch tries again."
+}
+
+main() {
+  check_payload
+  local file
+  file=$(target_file)
+  decoded=$(mktemp)
+  trap 'rm -f "$decoded"' EXIT
+  decode_content "$decoded"
+  check_content "$decoded"
+  sync_to_tip
+  check_tree "$file"
+  if [[ ${DRY_RUN:-} == true ]]; then
+    show_diff "$file" "$decoded"
+  else
+    publish "$file" "$decoded"
+  fi
+}
+
+main "$@"

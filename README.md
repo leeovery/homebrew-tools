@@ -9,6 +9,7 @@ Homebrew tap for personal CLI tools.
 brew install leeovery/tools/tick
 brew install leeovery/tools/portal
 brew install leeovery/tools/switchboard
+brew install leeovery/tools/terrace
 brew install leeovery/tools/kit
 brew install --cask leeovery/tools/sitrep
 brew install --cask leeovery/tools/spaceman
@@ -29,6 +30,7 @@ brew install leeovery/tools/bash-toolkit
 | `tick` | Priority-based task scheduling CLI | [leeovery/tick](https://github.com/leeovery/tick) | No (public) |
 | `portal` | Interactive session picker for tmux | [leeovery/portal](https://github.com/leeovery/portal) | No (public) |
 | `switchboard` | Spread Claude Code sessions across several Claude subscriptions | [leeovery/switchboard](https://github.com/leeovery/switchboard) | No (public) |
+| `terrace` | Shared, gated infrastructure runs for you and your AI agent | [leeovery/terrace](https://github.com/leeovery/terrace) | No (public) |
 | `kit` | Set up a Mac from a config repository, and keep it that way | [leeovery/kit](https://github.com/leeovery/kit) | No (public) |
 | `stitch` | The shipping tool for you and your agents | [leeovery/stitch](https://github.com/leeovery/stitch) | Yes |
 | `stitch-bash` | The bash Stitch, run as `stitch-bash`, for apps still on the old platform | [leeovery/stitch-bash](https://github.com/leeovery/stitch-bash) | Yes |
@@ -47,6 +49,7 @@ brew install leeovery/tools/bash-toolkit
 brew upgrade tick
 brew upgrade portal
 brew upgrade switchboard
+brew upgrade terrace
 brew upgrade stitch
 brew upgrade stitch-bash
 brew upgrade bash-toolkit

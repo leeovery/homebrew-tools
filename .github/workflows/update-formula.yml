@@ -1,7 +1,7 @@
 name: Update Formula
 # Names each run by its payload, so a sender (press upload, which kit,
-# mint, switchboard, sitrep and spaceman release through) can tell its own
-# run from another tool's that started beside it.
+# mint, switchboard, terrace, sitrep and spaceman release through) can tell
+# its own run from another tool's that started beside it.
 run-name: Update ${{ github.event.client_payload.tool }} to v${{ github.event.client_payload.version }}
 
 on:
@@ -183,6 +183,18 @@ jobs:
 
             # Update amd64 sha256
             sed -i "/darwin_amd64/{ n; s/sha256 \".*\"/sha256 \"$SHA256_AMD64\"/; }" $FORMULA_FILE
+          elif [ "$TOOL" = "terrace" ]; then
+            FORMULA_FILE="Formula/terrace.rb"
+            SHA256_ARM64="${{ github.event.client_payload.sha256_arm64 }}"
+            SHA256_AMD64="${{ github.event.client_payload.sha256_amd64 }}"
+
+            sed -i "s/version \".*\"/version \"$VERSION\"/" $FORMULA_FILE
+
+            # Update arm64 sha256
+            sed -i "/darwin_arm64/{ n; s/sha256 \".*\"/sha256 \"$SHA256_ARM64\"/; }" $FORMULA_FILE
+
+            # Update amd64 sha256
+            sed -i "/darwin_amd64/{ n; s/sha256 \".*\"/sha256 \"$SHA256_AMD64\"/; }" $FORMULA_FILE
           elif [ "$TOOL" = "kit" ]; then
             FORMULA_FILE="Formula/kit.rb"
             SHA256_ARM64="${{ github.event.client_payload.sha256_arm64 }}"
@@ -230,7 +242,7 @@ jobs:
               exit 1
             fi
           else
-            echo "Error: unsupported tool '$TOOL'. Supported tools: stitch, press, stitch-bash, bash-toolkit, tick, portal, mint, switchboard, kit, sitrep, spaceman"
+            echo "Error: unsupported tool '$TOOL'. Supported tools: stitch, press, stitch-bash, bash-toolkit, tick, portal, mint, switchboard, terrace, kit, sitrep, spaceman"
             exit 1
           fi
 
@@ -262,6 +274,8 @@ jobs:
             git add Formula/mint.rb
           elif [ "$TOOL" = "switchboard" ]; then
             git add Formula/switchboard.rb
+          elif [ "$TOOL" = "terrace" ]; then
+            git add Formula/terrace.rb
           elif [ "$TOOL" = "kit" ]; then
             git add Formula/kit.rb
           elif [ "$TOOL" = "sitrep" ]; then

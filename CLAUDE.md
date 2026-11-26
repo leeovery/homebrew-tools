@@ -22,6 +22,11 @@ This file provides comprehensive context to Claude Code when working with the le
 - Spreads Claude Code sessions across several Claude subscriptions (Go, dual-arch macOS binaries)
 - `brew install leeovery/tools/switchboard`
 
+**Terrace** (`Formula/terrace.rb`)
+- Shared, gated infrastructure runs for you and your AI agent (Go, dual-arch macOS binaries)
+- Committed with `version "0.0.0"` and two sha256s of 64 zeros as placeholders: the first release's dispatch writes the real values
+- `brew install leeovery/tools/terrace`
+
 ### Private (requires `HOMEBREW_GITHUB_API_TOKEN`)
 
 **Stitch** (`Formula/stitch.rb`)
@@ -70,7 +75,7 @@ This file provides comprehensive context to Claude Code when working with the le
 ### Formula Structure
 Two patterns exist:
 
-**Public tools (tick, portal, switchboard, mint):** Standard Homebrew formulas with dual-arch macOS support: `depends_on :macos`, then `on_arm` / `on_intel` blocks at the top level, each with its own URL and sha256. Not inside an `on_macos` block: Homebrew 7 checks a trusted tap's formulae for every OS and arch when it's tapped, and a formula with no URL on Linux fails it ("invalid syntax in tap!"). Updated via `sha256_arm64` / `sha256_amd64` in the dispatch payload.
+**Public tools (tick, portal, switchboard, terrace, mint):** Standard Homebrew formulas with dual-arch macOS support: `depends_on :macos`, then `on_arm` / `on_intel` blocks at the top level, each with its own URL and sha256. Not inside an `on_macos` block: Homebrew 7 checks a trusted tap's formulae for every OS and arch when it's tapped, and a formula with no URL on Linux fails it ("invalid syntax in tap!"). Updated via `sha256_arm64` / `sha256_amd64` in the dispatch payload.
 
 **Private tools (stitch, press, stitch-bash):** Use `GitHubPrivateReleaseDownloadStrategy`, defined in each formula:
 - Requires `HOMEBREW_GITHUB_API_TOKEN`; without it the download stops, saying so
@@ -88,9 +93,9 @@ The repository uses GitHub Actions (`.github/workflows/update-formula.yml`) to a
 1. **Trigger**: Repository dispatch events from source repositories
 2. **Payload**: Includes tool name, version, SHA256, asset ID, and download URL
 3. **Process**: Updates appropriate formula file and commits changes
-4. **Support**: Handles `stitch`, `press`, `stitch-bash`, `bash-toolkit`, `tick`, `portal`, `mint`, `switchboard`, `sitrep` and `spaceman` via tool parameter
+4. **Support**: Handles `stitch`, `press`, `stitch-bash`, `bash-toolkit`, `tick`, `portal`, `mint`, `switchboard`, `terrace`, `sitrep` and `spaceman` via tool parameter
 5. **One at a time**: a `concurrency` group queues a dispatch behind one running, so two can't race each other's `git push`. GitHub keeps only one pending run a group, so a third dispatch while one waits cancels the waiting one; a run times out after 5 minutes
-6. **Named by its payload**: `run-name` makes each run "Update <tool> to v<version>", so a sender waiting on its run (`press upload`, which kit, mint, switchboard, sitrep and spaceman release through) tells it from another tool's that started beside it; keep the name as it is, or change the sender with it
+6. **Named by its payload**: `run-name` makes each run "Update <tool> to v<version>", so a sender waiting on its run (`press upload`, which kit, mint, switchboard, terrace, sitrep and spaceman release through) tells it from another tool's that started beside it; keep the name as it is, or change the sender with it
 
 ### Written Whole (`write-formula.yml`)
 A second workflow, `.github/workflows/write-formula.yml`, writes a formula or cask that press sends whole, rendered from the project's own template, so it knows no tool. It runs beside `update-formula.yml` until every project sends through it:

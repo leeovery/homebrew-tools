@@ -86,6 +86,23 @@ The repository uses GitHub Actions (`.github/workflows/update-formula.yml`) to a
 5. **One at a time**: a `concurrency` group queues a dispatch behind one running, so two can't race each other's `git push`; a run times out after 5 minutes
 6. **Named by its payload**: `run-name` makes each run "Update <tool> to v<version>", so a sender waiting on its run (`press upload`, which kit, mint, switchboard, sitrep and spaceman release through) tells it from another tool's that started beside it; keep the name as it is, or change the sender with it
 
+### Written Whole (`write-formula.yml`)
+A second workflow, `.github/workflows/write-formula.yml`, writes a formula or cask that press sends whole, rendered from the project's own template, so it knows no tool. It runs beside `update-formula.yml` until every project sends through it:
+
+1. **Trigger**: a `repository_dispatch` of `write-formula`
+2. **Payload**: `tool`, `kind` (`formula` or `cask`), `version`, `content` (the file, base64), `content_sha256`, `dispatch` (8 random hex digits) and `dry_run`
+3. **Process**: `scripts/write-formula`, which takes the payload through the environment and refuses, saying what was wrong:
+   - a `tool` that isn't `^[a-z0-9][a-z0-9-]*$`, a `kind` that's neither `formula` nor `cask`, or a `version` that isn't `X.Y.Z`;
+   - content that isn't base64, or whose sha256 isn't `content_sha256`;
+   - content without a line `  version "<version>"`, or without the formula's `class <Name> < Formula` (`Name` derived from the tool as Homebrew derives it) or the cask's `cask "<tool>" do`;
+   - content `ruby -c` rejects.
+4. **The file** is `Formula/<tool>.rb` or `Casks/<tool>.rb`, derived from the payload and never sent in it, so a first release needs no file committed here first
+5. **Writing**: with `dry_run` true it prints the `diff -u` and writes nothing; otherwise it commits "Update <tool> formula to v…" (or cask) as the GitHub Action, exits 0 when the file already reads as sent, and pushes, rebasing once onto a remote that moved on
+6. **One at a time**: the same `concurrency` group as `update-formula.yml`, so the two never race each other's push; a queued run waits, never cancelled; a run times out after 5 minutes
+7. **Named by its payload**: `run-name` is "Write <kind> <tool> v<version> (<dispatch>)", so press tells its run from a resend or a neighbour's; keep it as it is, or change press with it
+
+`scripts/write-formula-test` runs the script against a temporary clone with a bare remote: writes, an unchanged write, a dry run, a rejected push, and each refusal. It needs git, ruby, base64 and sha256sum; `.github/workflows/test.yml` runs it on pull requests that touch `scripts/` or `.github/`.
+
 ## Workflow Integration
 
 ### Source Repository Workflow
@@ -154,6 +171,8 @@ brew audit --cask --strict <tap>/[cask-name]
 - `Casks/sitrep.rb` - SitRep cask (public, its release's zip by version in the url)
 - `Casks/spaceman.rb` - Spaceman cask (public, its release's zip by version in the url)
 - `.github/workflows/update-formula.yml` - Automated formula update workflow
+- `.github/workflows/write-formula.yml` - Writes a formula or cask press sends whole, through `scripts/write-formula`
+- `scripts/write-formula-test` - The write-formula script's tests, run by `.github/workflows/test.yml`
 - `README.md` - Main documentation with installation instructions
 
 ## Important Notes

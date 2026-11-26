@@ -55,3 +55,9 @@ brew upgrade --cask spaceman
 ```
 
 Formulas and casks auto-update via GitHub Actions when new releases are published.
+
+Two workflows do it. `update-formula.yml` edits a formula's or cask's version and sums in place, per tool. `write-formula.yml` writes a formula or cask that press (leeovery/press) sends whole, rendered from the project's own template: it knows no tool, and refuses anything that isn't a well-formed formula or cask for the name it claims. Its script's tests run with:
+
+```bash
+scripts/write-formula-test
+```

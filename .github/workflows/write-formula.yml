@@ -1,0 +1,39 @@
+name: Write Formula
+# press (leeovery/press) sends a formula or cask whole, rendered from the
+# project's own template; this checks it and writes it, knowing no tool.
+# press waits on the run it started, which it tells from any other by
+# run-name's random dispatch part: keep the name as it is, or change press
+# with it.
+run-name: Write ${{ github.event.client_payload.kind }} ${{ github.event.client_payload.tool }} v${{ github.event.client_payload.version }} (${{ github.event.client_payload.dispatch }})
+
+on:
+  repository_dispatch:
+    types: [write-formula]
+
+# The same group as update-formula.yml, so the old and new workflows never
+# race each other's push; a queued run waits, never cancelled.
+concurrency:
+  group: update-formula
+  cancel-in-progress: false
+
+jobs:
+  write:
+    runs-on: ubuntu-latest
+    # press waits on this run, so it must end.
+    timeout-minutes: 5
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Check and write
+        # The payload through the environment, never spliced into the script.
+        env:
+          TOOL: ${{ github.event.client_payload.tool }}
+          KIND: ${{ github.event.client_payload.kind }}
+          VERSION: ${{ github.event.client_payload.version }}
+          CONTENT: ${{ github.event.client_payload.content }}
+          CONTENT_SHA256: ${{ github.event.client_payload.content_sha256 }}
+          DRY_RUN: ${{ github.event.client_payload.dry_run }}
+        run: scripts/write-formula

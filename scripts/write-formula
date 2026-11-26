@@ -1,0 +1,120 @@
+#!/usr/bin/env bash
+# Checks a formula or cask that press sent whole, and writes it to the tap
+# checked out in the current directory. It knows no tool: the payload comes
+# through the environment (TOOL, KIND, VERSION, CONTENT, CONTENT_SHA256,
+# DRY_RUN), and the file it writes is derived from TOOL and KIND alone.
+set -euo pipefail
+
+fail() {
+  echo "write-formula: $*" >&2
+  exit 1
+}
+
+upper() {
+  printf '%s' "$1" | tr '[:lower:]' '[:upper:]'
+}
+
+# Homebrew's own derivation (Formulary.class_s) for the names TOOL allows:
+# the first letter and each letter or digit after a dash made upper case,
+# that dash dropped.
+class_name() {
+  local name=$1 out="" i
+  for ((i = 0; i < ${#name}; i++)); do
+    if [[ ${name:i:1} == - && ${name:i+1:1} == [a-z0-9] ]]; then
+      i=$((i + 1))
+      out+=$(upper "${name:i:1}")
+    else
+      out+=${name:i:1}
+    fi
+  done
+  printf '%s%s' "$(upper "${out:0:1}")" "${out:1}"
+}
+
+check_payload() {
+  [[ ${TOOL:-} =~ ^[a-z0-9][a-z0-9-]*$ ]] ||
+    fail "the tool \"${TOOL:-}\" isn't a tap name: lower-case letters, digits and dashes, starting with a letter or digit."
+  [[ ${KIND:-} == formula || ${KIND:-} == cask ]] ||
+    fail "the kind \"${KIND:-}\" is neither formula nor cask."
+  [[ ${VERSION:-} =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]] ||
+    fail "the version \"${VERSION:-}\" isn't X.Y.Z: the tap takes no pre-release."
+  [[ ${CONTENT_SHA256:-} =~ ^[0-9a-f]{64}$ ]] ||
+    fail "the content's sha256 \"${CONTENT_SHA256:-}\" isn't 64 lower-case hex digits."
+  [[ -z ${DRY_RUN:-} || $DRY_RUN == true || $DRY_RUN == false ]] ||
+    fail "dry_run \"$DRY_RUN\" is neither true nor false."
+}
+
+target_file() {
+  case $KIND in
+    formula) echo "Formula/$TOOL.rb" ;;
+    cask) echo "Casks/$TOOL.rb" ;;
+  esac
+}
+
+decode_content() {
+  local out=$1 sum
+  printf '%s' "${CONTENT:-}" | base64 -d >"$out" 2>/dev/null ||
+    fail "the content isn't valid base64."
+  sum=$(sha256sum "$out" | cut -d' ' -f1)
+  [[ $sum == "$CONTENT_SHA256" ]] ||
+    fail "the content's sha256 is $sum, not the $CONTENT_SHA256 sent with it."
+}
+
+check_content() {
+  local file=$1 class syntax
+  grep -qxF "  version \"$VERSION\"" "$file" ||
+    fail "the $KIND has no line 'version \"$VERSION\"' for the version sent."
+  if [[ $KIND == formula ]]; then
+    class=$(class_name "$TOOL")
+    if ! [[ $class =~ ^[A-Z][A-Za-z0-9]*$ ]] || ! grep -qxF "class $class < Formula" "$file"; then
+      fail "the formula has no line 'class $class < Formula' for the tool $TOOL."
+    fi
+  else
+    grep -qxF "cask \"$TOOL\" do" "$file" ||
+      fail "the cask has no line 'cask \"$TOOL\" do' for the tool $TOOL."
+  fi
+  syntax=$(ruby -c "$file" 2>&1) ||
+    fail "the $KIND isn't valid Ruby: $syntax"
+}
+
+show_diff() {
+  local file=$1 new=$2 current=/dev/null
+  [[ -f $file ]] && current=$file
+  echo "Dry run: $file would change as follows; nothing is written."
+  diff -u --label "a/$file" --label "b/$file" "$current" "$new" || true
+}
+
+write_and_push() {
+  local file=$1 new=$2
+  mkdir -p "$(dirname "$file")"
+  cp "$new" "$file"
+  git add "$file"
+  if git diff --cached --quiet; then
+    echo "$file already reads as sent: nothing to commit."
+    return
+  fi
+  git config --local user.email "action@github.com"
+  git config --local user.name "GitHub Action"
+  git commit -q -m "Update $TOOL $KIND to v$VERSION"
+  if ! git push -q; then
+    git pull -q --rebase
+    git push -q
+  fi
+  echo "Wrote $file for $TOOL v$VERSION."
+}
+
+main() {
+  check_payload
+  local file
+  file=$(target_file)
+  decoded=$(mktemp)
+  trap 'rm -f "$decoded"' EXIT
+  decode_content "$decoded"
+  check_content "$decoded"
+  if [[ ${DRY_RUN:-} == true ]]; then
+    show_diff "$file" "$decoded"
+  else
+    write_and_push "$file" "$decoded"
+  fi
+}
+
+main "$@"

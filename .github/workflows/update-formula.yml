@@ -89,6 +89,31 @@ jobs:
               echo "Error: $FORMULA_FILE has no version or sha256 line where the workflow looks for it"
               exit 1
             fi
+          elif [ "$TOOL" = "press" ]; then
+            # press's first release, sent by the Python press, as stitch's
+            # are: an archive for each chip from its private repo, so only the
+            # version and the two sha256s change, each the first after its
+            # url. From its next release press sends write-formula.yml the
+            # whole formula, and this branch goes.
+            FORMULA_FILE="Formula/press.rb"
+            SHA256_ARM64="$PAYLOAD_SHA256_ARM64"
+            SHA256_AMD64="$PAYLOAD_SHA256_AMD64"
+
+            if ! [[ $VERSION =~ ^[0-9]+\.[0-9]+\.[0-9]+$ && $SHA256_ARM64 =~ ^[0-9a-f]{64}$ && $SHA256_AMD64 =~ ^[0-9a-f]{64}$ ]]; then
+              echo "Error: press needs a version X.Y.Z and two sha256s of 64 hex digits, sha256_arm64 and sha256_amd64; got '$VERSION', '$SHA256_ARM64', '$SHA256_AMD64'"
+              exit 1
+            fi
+
+            sed -i "s/^  version \"[0-9.]*\"$/  version \"$VERSION\"/" $FORMULA_FILE
+            sed -i "/darwin_arm64/,/sha256/ s/^    sha256 \"[0-9a-f]*\"$/    sha256 \"$SHA256_ARM64\"/" $FORMULA_FILE
+            sed -i "/darwin_amd64/,/sha256/ s/^    sha256 \"[0-9a-f]*\"$/    sha256 \"$SHA256_AMD64\"/" $FORMULA_FILE
+
+            if ! grep -qx "  version \"$VERSION\"" $FORMULA_FILE ||
+              ! grep -A2 darwin_arm64 $FORMULA_FILE | grep -qx "    sha256 \"$SHA256_ARM64\"" ||
+              ! grep -A2 darwin_amd64 $FORMULA_FILE | grep -qx "    sha256 \"$SHA256_AMD64\""; then
+              echo "Error: $FORMULA_FILE has no version or sha256 line where the workflow looks for it"
+              exit 1
+            fi
           elif [ "$TOOL" = "stitch-bash" ]; then
             # The bash Stitch, under its own name since the Go Stitch took
             # stitch: one archive from its private repo, found by its file name,
@@ -205,7 +230,7 @@ jobs:
               exit 1
             fi
           else
-            echo "Error: unsupported tool '$TOOL'. Supported tools: stitch, stitch-bash, bash-toolkit, tick, portal, mint, switchboard, kit, sitrep, spaceman"
+            echo "Error: unsupported tool '$TOOL'. Supported tools: stitch, press, stitch-bash, bash-toolkit, tick, portal, mint, switchboard, kit, sitrep, spaceman"
             exit 1
           fi
 
@@ -225,6 +250,8 @@ jobs:
             git add Formula/bash-toolkit.rb
           elif [ "$TOOL" = "stitch" ]; then
             git add Formula/stitch.rb
+          elif [ "$TOOL" = "press" ]; then
+            git add Formula/press.rb
           elif [ "$TOOL" = "stitch-bash" ]; then
             git add Formula/stitch-bash.rb
           elif [ "$TOOL" = "tick" ]; then

@@ -80,6 +80,6 @@ class Press < Formula
   end
 
   test do
-    assert_match "press version", shell_output("#{bin}/press --version")
+    assert_match "press version #{version}", shell_output("#{bin}/press --version")
   end
 end

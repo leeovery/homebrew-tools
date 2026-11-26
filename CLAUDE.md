@@ -77,7 +77,7 @@ Two patterns exist:
 - Finds the asset by its file name in the release the URL names, through GitHub's API, so the formula keeps no asset IDs
 - Hands the token to curl on stdin (`--header @-`), so it never shows in a command line; `secrets:` redacts it from any output, and `--disable` keeps a `~/.curlrc` out
 - Raises `CurlDownloadStrategyError` on a failure, never `odie`, which Homebrew's download threads swallow as `Error: exit`
-- Each formula holds the same strategy, so a change to it is made in all three
+- Each formula holds the same strategy, so a change to it is made in each. press's copy is made in press's own repo, in `packaging/homebrew/press.rb`: from press 0.2.0 each release writes `Formula/press.rb` whole from that template, so a change made only here would be undone
 - stitch and press have `on_arm` / `on_intel` blocks as the public tools do, updated by `sha256_arm64` / `sha256_amd64` (press's payload); stitch-bash one archive, updated by `sha256`; the workflow refuses a payload without them
 
 **bash-toolkit** keeps the older `GitHubPrivateRepositoryDownloadStrategy`, which maps version numbers to GitHub release asset IDs and falls back to a plain download without a token.

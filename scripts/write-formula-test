@@ -86,20 +86,51 @@ remote_moves_to() {
   seed_git -C "$seed" push -q origin main
 }
 
-# The remote refuses the next N pushes, as a moved-on main does.
-remote_rejects() {
-  local hook="$remote/hooks/pre-receive" count="$work/$cases/rejected"
-  echo 0 >"$count"
-  cat >"$hook" <<HOOK
+# A git on the script's PATH that moves main on just before each of its
+# next N pushes, as another run landing first does: to example-tool at the
+# version given, or with "other", by another tool's commit.
+main_moves_before_push() { # n version|other
+  local dir="$work/$cases" real
+  real=$(command -v git)
+  mkdir -p "$dir/bin"
+  echo 0 >"$dir/pushes"
+  rm -f "$dir/next.rb"
+  [[ $2 == other ]] || formula "$2" >"$dir/next.rb"
+  cat >"$dir/bin/git" <<SHIM
 #!/usr/bin/env bash
-n=\$((\$(cat "$count") + 1))
-echo "\$n" >"$count"
-if ((n <= $1)); then
-  echo "rejected" >&2
-  exit 1
+if [[ \$1 == push ]]; then
+  n=\$((\$(cat "$dir/pushes") + 1))
+  echo "\$n" >"$dir/pushes"
+  if ((n <= $1)); then
+    seed() { "$real" -C "$dir/seed" -c user.name=Seed -c user.email=seed@example.com "\$@"; }
+    seed fetch -q origin main && seed reset -q --hard origin/main
+    if [[ -f "$dir/next.rb" ]]; then
+      cp "$dir/next.rb" "$dir/seed/Formula/example-tool.rb"
+      seed commit -q -am "Update example-tool formula to v$2"
+    else
+      seed commit -q --allow-empty -m "Another tool's update \$n"
+    fi
+    seed push -q origin main
+  fi
 fi
+exec "$real" "\$@"
+SHIM
+  chmod +x "$dir/bin/git"
+  shim_path="$dir/bin:"
+}
+
+# The remote's pre-receive hook refuses every push, as a remote does that
+# won't take one for any reason but main having moved on.
+remote_refuses_pushes() {
+  local count="$work/$cases/refused"
+  echo 0 >"$count"
+  cat >"$remote/hooks/pre-receive" <<HOOK
+#!/usr/bin/env bash
+echo \$((\$(cat "$count") + 1)) >"$count"
+echo "pushes are closed" >&2
+exit 1
 HOOK
-  chmod +x "$hook"
+  chmod +x "$remote/hooks/pre-receive"
 }
 
 # Runs the script in $tap with the payload in TOOL, KIND, VERSION and BODY;
@@ -109,7 +140,7 @@ run() {
   content=${CONTENT-$(printf '%s\n' "$BODY" | base64 | tr -d '\n')}
   sum=${CONTENT_SHA256-$(body_sum)}
   status=0
-  (cd "$tap" && TOOL=$TOOL KIND=$KIND VERSION=$VERSION CONTENT=$content \
+  (cd "$tap" && PATH="$shim_path$PATH" TOOL=$TOOL KIND=$KIND VERSION=$VERSION CONTENT=$content \
     CONTENT_SHA256=$sum DRY_RUN=${DRY_RUN:-} "$script") \
     >"$work/out" 2>"$work/err" || status=$?
   out=$(cat "$work/out")
@@ -120,6 +151,7 @@ begin() {
   cases=$((cases + 1))
   current=$1
   unset CONTENT CONTENT_SHA256 DRY_RUN
+  shim_path=""
   new_tap
 }
 
@@ -216,20 +248,47 @@ expect_status 0
 expect_commit Formula/example-tool.rb "Update example-tool formula to v1.2.0"
 expect_equal "the remote's previous commit" "$(git -C "$remote" log -1 --format=%s main~1)" "Update example-tool formula to v1.1.0"
 
-begin "a write whose push is rejected twice, written again onto main's tip"
-remote_rejects 2
+begin "a write whose push is refused, main having moved on with another tool's commit"
+main_moves_before_push 1 other
 TOOL=example-tool KIND=formula VERSION=1.2.3 BODY=$(formula 1.2.3)
 run
 expect_status 0
 expect_commit Formula/example-tool.rb "Update example-tool formula to v1.2.3"
-expect_equal "the remote's previous commit" "$(git -C "$remote" log -1 --format=%s main~1)" "Seed the tap"
+expect_equal "the remote's previous commit" "$(git -C "$remote" log -1 --format=%s main~1)" "Another tool's update 1"
 
-begin "a write whose push is rejected five times"
-remote_rejects 5
+begin "a write whose push is refused twice, written again onto main's tip"
+main_moves_before_push 2 other
+TOOL=example-tool KIND=formula VERSION=1.2.3 BODY=$(formula 1.2.3)
+run
+expect_status 0
+expect_commit Formula/example-tool.rb "Update example-tool formula to v1.2.3"
+expect_equal "the remote's previous commit" "$(git -C "$remote" log -1 --format=%s main~1)" "Another tool's update 2"
+
+begin "a write whose push is refused, main having moved on to a newer version"
+main_moves_before_push 1 1.2.0
+TOOL=example-tool KIND=formula VERSION=1.1.0 BODY=$(formula 1.1.0)
+run
+expect_status 1
+expect_equal "stderr" "$err" "write-formula: Formula/example-tool.rb holds 1.2.0, newer than 1.1.0: the tap never goes back a version."
+expect_equal "the remote's example-tool version" "$(git -C "$remote" show main:Formula/example-tool.rb | grep '^  version')" '  version "1.2.0"'
+
+begin "a write whose push is refused five times, main moving on before each"
+main_moves_before_push 5 other
 TOOL=example-tool KIND=formula VERSION=1.2.3 BODY=$(formula 1.2.3)
 run
 expect_status 1
-expect_contains "stderr" "$err" "write-formula: the push of Formula/example-tool.rb to main was rejected 5 times, each from main's fresh tip; git's own words are above, and a new dispatch tries again."
+expect_equal "stderr" "$err" "write-formula: the push of Formula/example-tool.rb to main was refused 5 times, main having moved on before each; a new dispatch tries again."
+expect_equal "the remote's commit message" "$(git -C "$remote" log -1 --format=%s main)" "Another tool's update 5"
+expect_equal "the remote's example-tool version" "$(git -C "$remote" show main:Formula/example-tool.rb | grep '^  version')" '  version "1.0.0"'
+
+begin "a push that fails for another reason, never retried"
+remote_refuses_pushes
+TOOL=example-tool KIND=formula VERSION=1.2.3 BODY=$(formula 1.2.3)
+run
+expect_status 1
+expect_contains "stderr" "$err" "write-formula: couldn't push Formula/example-tool.rb to main: "
+expect_contains "stderr" "$err" "pushes are closed"
+expect_equal "the pushes tried" "$(cat "$work/$cases/refused")" 1
 expect_equal "the remote's main" "$(git -C "$remote" rev-parse main)" "$seed_head"
 
 begin "a version older than the tap's"

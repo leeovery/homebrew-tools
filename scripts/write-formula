@@ -124,15 +124,29 @@ show_diff() {
   ((status <= 1)) || fail "couldn't compare $file with the content sent."
 }
 
-# Writes the file onto main's tip and pushes it. A rejected push means main
-# moved on, so it starts again from the new tip, up to five times.
+# Pushes the commit to main. Returns 1 when main moved on, the push refused
+# as no fast-forward; any other failure (auth, network, a protected branch)
+# fails at once, in git's own words.
+push_main() {
+  local file=$1 out status=0
+  out=$(git push --porcelain origin HEAD:main 2>&1) || status=$?
+  ((status != 0)) || return 0
+  if grep -qE '^!.*\[rejected\] \((fetch first|non-fast-forward)\)$' <<<"$out"; then
+    return 1
+  fi
+  fail "couldn't push $file to main: $out"
+}
+
+# Writes the file onto main's tip and pushes it. A push refused because main
+# moved on starts again from the new tip, up to five times, each wait longer
+# and jittered so runs that collided don't retry in step.
 publish() {
   local file=$1 new=$2 attempts=5 backoff=${WRITE_FORMULA_BACKOFF:-2} attempt
   git config --local user.email "action@github.com"
   git config --local user.name "GitHub Action"
   for ((attempt = 1; attempt <= attempts; attempt++)); do
     if ((attempt > 1)); then
-      sleep $(((attempt - 1) * backoff))
+      sleep $(((attempt - 1) * backoff + RANDOM % (backoff + 1)))
       sync_to_tip
       check_tree "$file"
     fi
@@ -144,12 +158,12 @@ publish() {
       return
     fi
     git commit -q -m "Update $TOOL $KIND to v$VERSION"
-    if git push -q origin HEAD:main; then
+    if push_main "$file"; then
       echo "Wrote $file for $TOOL v$VERSION."
       return
     fi
   done
-  fail "the push of $file to main was rejected $attempts times, each from main's fresh tip; git's own words are above, and a new dispatch tries again."
+  fail "the push of $file to main was refused $attempts times, main having moved on before each; a new dispatch tries again."
 }
 
 main() {

@@ -3,6 +3,7 @@
 # checked out in the current directory. It knows no tool: the payload comes
 # through the environment (TOOL, KIND, VERSION, CONTENT, CONTENT_SHA256,
 # DRY_RUN), and the file it writes is derived from TOOL and KIND alone.
+# WRITE_FORMULA_BACKOFF, seconds, scales the wait between push attempts.
 set -euo pipefail
 
 fail() {
@@ -43,11 +44,26 @@ check_payload() {
     fail "dry_run \"$DRY_RUN\" is neither true nor false."
 }
 
-target_file() {
-  case $KIND in
-    formula) echo "Formula/$TOOL.rb" ;;
-    cask) echo "Casks/$TOOL.rb" ;;
+folder() { # kind
+  case $1 in
+    formula) echo Formula ;;
+    cask) echo Casks ;;
   esac
+}
+
+other_kind() {
+  case $KIND in
+    formula) echo cask ;;
+    cask) echo formula ;;
+  esac
+}
+
+target_file() {
+  echo "$(folder "$KIND")/$TOOL.rb"
+}
+
+other_file() {
+  echo "$(folder "$(other_kind)")/$TOOL.rb"
 }
 
 decode_content() {
@@ -76,30 +92,64 @@ check_content() {
     fail "the $KIND isn't valid Ruby: $syntax"
 }
 
-show_diff() {
-  local file=$1 new=$2 current=/dev/null
-  [[ -f $file ]] && current=$file
-  echo "Dry run: $file would change as follows; nothing is written."
-  diff -u --label "a/$file" --label "b/$file" "$current" "$new" || true
+# The tap's main as it is now, never the commit the dispatch fired at: a
+# run that waited, or lost a push, would otherwise write onto a stale tree.
+# The content is the whole file and final, so there is nothing to merge.
+sync_to_tip() {
+  git fetch -q origin main || fail "couldn't fetch main from origin."
+  git reset -q --hard FETCH_HEAD
 }
 
-write_and_push() {
-  local file=$1 new=$2
-  mkdir -p "$(dirname "$file")"
-  cp "$new" "$file"
-  git add "$file"
-  if git diff --cached --quiet; then
-    echo "$file already reads as sent: nothing to commit."
-    return
+check_tree() {
+  local file=$1 other current newest
+  other=$(other_file)
+  [[ ! -e $other ]] ||
+    fail "$other is in the way: the tap holds $TOOL as a $(other_kind), so it can't take it as a $KIND too."
+  [[ -f $file ]] || return 0
+  current=$(sed -n 's/^  version "\([^"]*\)"$/\1/p' "$file" | head -n 1)
+  [[ -n $current && $current != "$VERSION" ]] || return 0
+  newest=$(printf '%s\n' "$current" "$VERSION" | sort -V | tail -n 1)
+  [[ $newest != "$current" ]] ||
+    fail "$file holds $current, newer than $VERSION: the tap never goes back a version."
+}
+
+show_diff() {
+  local file=$1 new=$2 current=/dev/null from=/dev/null status=0
+  if [[ -f $file ]]; then
+    current=$file
+    from="a/$file"
   fi
+  echo "Dry run: $file would change as follows; nothing is written."
+  diff -u --label "$from" --label "b/$file" "$current" "$new" || status=$?
+  ((status <= 1)) || fail "couldn't compare $file with the content sent."
+}
+
+# Writes the file onto main's tip and pushes it. A rejected push means main
+# moved on, so it starts again from the new tip, up to five times.
+publish() {
+  local file=$1 new=$2 attempts=5 backoff=${WRITE_FORMULA_BACKOFF:-2} attempt
   git config --local user.email "action@github.com"
   git config --local user.name "GitHub Action"
-  git commit -q -m "Update $TOOL $KIND to v$VERSION"
-  if ! git push -q; then
-    git pull -q --rebase
-    git push -q
-  fi
-  echo "Wrote $file for $TOOL v$VERSION."
+  for ((attempt = 1; attempt <= attempts; attempt++)); do
+    if ((attempt > 1)); then
+      sleep $(((attempt - 1) * backoff))
+      sync_to_tip
+      check_tree "$file"
+    fi
+    mkdir -p "$(dirname "$file")"
+    cp "$new" "$file"
+    git add "$file"
+    if git diff --cached --quiet; then
+      echo "$file already reads as sent: nothing to commit."
+      return
+    fi
+    git commit -q -m "Update $TOOL $KIND to v$VERSION"
+    if git push -q origin HEAD:main; then
+      echo "Wrote $file for $TOOL v$VERSION."
+      return
+    fi
+  done
+  fail "the push of $file to main was rejected $attempts times, each from main's fresh tip; git's own words are above, and a new dispatch tries again."
 }
 
 main() {
@@ -110,10 +160,12 @@ main() {
   trap 'rm -f "$decoded"' EXIT
   decode_content "$decoded"
   check_content "$decoded"
+  sync_to_tip
+  check_tree "$file"
   if [[ ${DRY_RUN:-} == true ]]; then
     show_diff "$file" "$decoded"
   else
-    write_and_push "$file" "$decoded"
+    publish "$file" "$decoded"
   fi
 }
 

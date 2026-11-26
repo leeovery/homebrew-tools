@@ -10,11 +10,11 @@ on:
   repository_dispatch:
     types: [write-formula]
 
-# The same group as update-formula.yml, so the old and new workflows never
-# race each other's push; a queued run waits, never cancelled.
-concurrency:
-  group: update-formula
-  cancel-in-progress: false
+# No concurrency group: GitHub keeps one pending run a group, so a third
+# dispatch would cancel the one waiting. Runs go side by side instead, which
+# scripts/write-formula makes safe: it writes onto main's tip as fetched,
+# starts again from the new tip when a push is rejected, and refuses a
+# version older than the tap's.
 
 jobs:
   write:
@@ -26,6 +26,9 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          # main's tip, not the commit main was at when the dispatch fired.
+          ref: main
 
       - name: Check and write
         # The payload through the environment, never spliced into the script.

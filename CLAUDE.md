@@ -83,7 +83,7 @@ The repository uses GitHub Actions (`.github/workflows/update-formula.yml`) to a
 2. **Payload**: Includes tool name, version, SHA256, asset ID, and download URL
 3. **Process**: Updates appropriate formula file and commits changes
 4. **Support**: Handles `stitch`, `stitch-bash`, `bash-toolkit`, `tick`, `portal`, `mint`, `switchboard`, `sitrep` and `spaceman` via tool parameter
-5. **One at a time**: a `concurrency` group queues a dispatch behind one running, so two can't race each other's `git push`; a run times out after 5 minutes
+5. **One at a time**: a `concurrency` group queues a dispatch behind one running, so two can't race each other's `git push`. GitHub keeps only one pending run a group, so a third dispatch while one waits cancels the waiting one; a run times out after 5 minutes
 6. **Named by its payload**: `run-name` makes each run "Update <tool> to v<version>", so a sender waiting on its run (`press upload`, which kit, mint, switchboard, sitrep and spaceman release through) tells it from another tool's that started beside it; keep the name as it is, or change the sender with it
 
 ### Written Whole (`write-formula.yml`)
@@ -97,11 +97,11 @@ A second workflow, `.github/workflows/write-formula.yml`, writes a formula or ca
    - content without a line `  version "<version>"`, or without the formula's `class <Name> < Formula` (`Name` derived from the tool as Homebrew derives it) or the cask's `cask "<tool>" do`;
    - content `ruby -c` rejects.
 4. **The file** is `Formula/<tool>.rb` or `Casks/<tool>.rb`, derived from the payload and never sent in it, so a first release needs no file committed here first
-5. **Writing**: with `dry_run` true it prints the `diff -u` and writes nothing; otherwise it commits "Update <tool> formula to v…" (or cask) as the GitHub Action, exits 0 when the file already reads as sent, and pushes, rebasing once onto a remote that moved on
-6. **One at a time**: the same `concurrency` group as `update-formula.yml`, so the two never race each other's push; a queued run waits, never cancelled; a run times out after 5 minutes
+5. **Writing**: it fetches main and resets to its tip, then refuses when `<tool>.rb` is already in the other folder (a cask for a formula, or the reverse) or the tap's file holds a newer version than the one sent (`sort -V`). With `dry_run` true it prints the `diff -u` against that tip and writes nothing; otherwise it commits "Update <tool> formula to v…" (or cask) as the GitHub Action, exits 0 when the file already reads as sent, and pushes. A rejected push starts again from main's new tip, up to five attempts with a growing wait, then fails; the content is the whole file, so there is nothing to merge
+6. **Side by side**: no `concurrency` group, because GitHub keeps one pending run a group and a third dispatch would cancel the one waiting. Runs go side by side, made safe by step 5: nothing is ever cancelled, and runs that finish out of order never take a file back a version. `update-formula.yml`'s push, which doesn't retry, can still lose a race to it and fail its run. A run times out after 5 minutes
 7. **Named by its payload**: `run-name` is "Write <kind> <tool> v<version> (<dispatch>)", so press tells its run from a resend or a neighbour's; keep it as it is, or change press with it
 
-`scripts/write-formula-test` runs the script against a temporary clone with a bare remote: writes, an unchanged write, a dry run, a rejected push, and each refusal. It needs git, ruby, base64 and sha256sum; `.github/workflows/test.yml` runs it on pull requests that touch `scripts/` or `.github/`.
+`scripts/write-formula-test` runs the script against a temporary clone with a bare remote: writes, an unchanged write, dry runs, a stale depth-1 clone, rejected pushes and retries running out, and each refusal. `WRITE_FORMULA_BACKOFF` (seconds, default 2) scales the wait between push attempts; the tests set it to 0. It needs git, ruby, base64 and sha256sum; `.github/workflows/test.yml` runs it on pull requests that touch `scripts/` or `.github/`.
 
 ## Workflow Integration
 

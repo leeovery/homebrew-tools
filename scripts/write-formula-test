@@ -10,6 +10,7 @@ trap 'rm -rf "$work"' EXIT
 # Nothing from the machine's own git config: no signing, no identity, so a
 # commit the script makes without its own identity fails.
 export GIT_CONFIG_GLOBAL=/dev/null GIT_CONFIG_NOSYSTEM=1
+export WRITE_FORMULA_BACKOFF=0
 
 failures=0
 cases=0
@@ -75,6 +76,30 @@ new_tap() {
 # substitution strips; the file sent ends with one, as the seeded files do.
 body_sum() {
   printf '%s\n' "$BODY" | sha256sum | cut -d' ' -f1
+}
+
+# Moves the remote's main on to example-tool at the version given.
+remote_moves_to() {
+  local seed="$work/$cases/seed"
+  formula "$1" >"$seed/Formula/example-tool.rb"
+  seed_git -C "$seed" commit -q -am "Update example-tool formula to v$1"
+  seed_git -C "$seed" push -q origin main
+}
+
+# The remote refuses the next N pushes, as a moved-on main does.
+remote_rejects() {
+  local hook="$remote/hooks/pre-receive" count="$work/$cases/rejected"
+  echo 0 >"$count"
+  cat >"$hook" <<HOOK
+#!/usr/bin/env bash
+n=\$((\$(cat "$count") + 1))
+echo "\$n" >"$count"
+if ((n <= $1)); then
+  echo "rejected" >&2
+  exit 1
+fi
+HOOK
+  chmod +x "$hook"
 }
 
 # Runs the script in $tap with the payload in TOOL, KIND, VERSION and BODY;
@@ -172,7 +197,7 @@ expect_contains "stdout" "$out" '-  version "1.0.0"'
 expect_contains "stdout" "$out" '+  version "1.2.3"'
 expect_remote_unchanged
 
-begin "a write whose push is rejected, the remote having moved on"
+begin "a write after main moved on with another tool's commit, onto main's tip"
 seed_git -C "$work/$cases/seed" commit -q --allow-empty -m "Another tool's update"
 seed_git -C "$work/$cases/seed" push -q origin main
 TOOL=example-tool KIND=formula VERSION=1.2.3 BODY=$(formula 1.2.3)
@@ -180,6 +205,89 @@ run
 expect_status 0
 expect_commit Formula/example-tool.rb "Update example-tool formula to v1.2.3"
 expect_equal "the remote's previous commit" "$(git -C "$remote" log -1 --format=%s main~1)" "Another tool's update"
+
+begin "a write from a depth-1 clone at an old commit, after main moved to another version of the file"
+rm -rf "$tap"
+git clone -q --depth 1 "file://$remote" "$tap"
+remote_moves_to 1.1.0
+TOOL=example-tool KIND=formula VERSION=1.2.0 BODY=$(formula 1.2.0)
+run
+expect_status 0
+expect_commit Formula/example-tool.rb "Update example-tool formula to v1.2.0"
+expect_equal "the remote's previous commit" "$(git -C "$remote" log -1 --format=%s main~1)" "Update example-tool formula to v1.1.0"
+
+begin "a write whose push is rejected twice, written again onto main's tip"
+remote_rejects 2
+TOOL=example-tool KIND=formula VERSION=1.2.3 BODY=$(formula 1.2.3)
+run
+expect_status 0
+expect_commit Formula/example-tool.rb "Update example-tool formula to v1.2.3"
+expect_equal "the remote's previous commit" "$(git -C "$remote" log -1 --format=%s main~1)" "Seed the tap"
+
+begin "a write whose push is rejected five times"
+remote_rejects 5
+TOOL=example-tool KIND=formula VERSION=1.2.3 BODY=$(formula 1.2.3)
+run
+expect_status 1
+expect_contains "stderr" "$err" "write-formula: the push of Formula/example-tool.rb to main was rejected 5 times, each from main's fresh tip; git's own words are above, and a new dispatch tries again."
+expect_equal "the remote's main" "$(git -C "$remote" rev-parse main)" "$seed_head"
+
+begin "a version older than the tap's"
+TOOL=example-tool KIND=formula VERSION=0.9.0 BODY=$(formula 0.9.0)
+run
+expect_refused "Formula/example-tool.rb holds 1.0.0, newer than 0.9.0: the tap never goes back a version."
+
+begin "a version older than the tap's once main moved on, from a stale clone"
+remote_moves_to 1.10.0
+seed_head=$(git -C "$remote" rev-parse main)
+TOOL=example-tool KIND=formula VERSION=1.9.0 BODY=$(formula 1.9.0)
+run
+expect_status 1
+expect_equal "stderr" "$err" "write-formula: Formula/example-tool.rb holds 1.10.0, newer than 1.9.0: the tap never goes back a version."
+expect_equal "the remote's main" "$(git -C "$remote" rev-parse main)" "$seed_head"
+
+begin "a cask whose tool the tap holds as a formula"
+TOOL=example-tool KIND=cask VERSION=1.2.3 BODY=$(cask 1.2.3 example-tool)
+run
+expect_refused "Formula/example-tool.rb is in the way: the tap holds example-tool as a formula, so it can't take it as a cask too."
+
+begin "a formula whose tool the tap holds as a cask"
+TOOL=example-app KIND=formula VERSION=1.2.3 BODY=$(formula 1.2.3 ExampleApp)
+run
+expect_refused "Casks/example-app.rb is in the way: the tap holds example-app as a cask, so it can't take it as a formula too."
+
+begin "a dry run of a first write"
+TOOL=new-tool KIND=formula VERSION=0.1.0 BODY=$(formula 0.1.0 NewTool) DRY_RUN=true
+run
+expect_status 0
+expect_contains "stdout" "$out" "--- /dev/null"
+expect_contains "stdout" "$out" "+class NewTool < Formula"
+expect_remote_unchanged
+[[ ! -e $tap/Formula/new-tool.rb ]] || flunk "the dry run wrote Formula/new-tool.rb"
+
+begin "a dry run from a stale clone, against main's tip"
+remote_moves_to 1.1.0
+seed_head=$(git -C "$remote" rev-parse main)
+TOOL=example-tool KIND=formula VERSION=1.2.3 BODY=$(formula 1.2.3) DRY_RUN=true
+run
+expect_status 0
+expect_contains "stdout" "$out" '-  version "1.1.0"'
+expect_equal "the remote's main" "$(git -C "$remote" rev-parse main)" "$seed_head"
+
+begin "an unchanged write from a stale clone, against main's tip"
+remote_moves_to 1.1.0
+seed_head=$(git -C "$remote" rev-parse main)
+TOOL=example-tool KIND=formula VERSION=1.1.0 BODY=$(formula 1.1.0)
+run
+expect_status 0
+expect_equal "stdout" "$out" "Formula/example-tool.rb already reads as sent: nothing to commit."
+expect_equal "the remote's main" "$(git -C "$remote" rev-parse main)" "$seed_head"
+
+begin "dry_run sent as false"
+TOOL=example-tool KIND=formula VERSION=1.2.3 BODY=$(formula 1.2.3) DRY_RUN=false
+run
+expect_status 0
+expect_commit Formula/example-tool.rb "Update example-tool formula to v1.2.3"
 
 begin "an unknown kind"
 TOOL=example-tool KIND=bottle VERSION=1.2.3 BODY=$(formula 1.2.3)

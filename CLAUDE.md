@@ -29,6 +29,12 @@ This file provides comprehensive context to Claude Code when working with the le
 - `version_scheme 1`, from 0.1.0, so its own semver reads as newer than the bash Stitch's 1.6.6, which this formula installed until then; the workflow's edits leave it as it is
 - `brew install leeovery/tools/stitch`
 
+**Press** (`Formula/press.rb`)
+- press, which builds, signs, notarises and ships a project's release on a Mac (Go, dual-arch macOS binaries, `GitHubPrivateReleaseDownloadStrategy` while its repo is private)
+- Committed with `version "0.0.0"` and two sha256s of 64 zeros as placeholders: the first release's dispatch writes the real values
+- Its first release, 0.1.0, comes from the Python press through `update-formula.yml`: `tool=press` with `version`, `sha256_arm64` and `sha256_amd64`, checked and written as stitch's are. From 0.2.0 press sends the whole formula, rendered from `packaging/homebrew/press.rb` in its repo, to `write-formula.yml`, and the `press` branch in `update-formula.yml` goes
+- `brew install leeovery/tools/press`
+
 **Stitch Bash** (`Formula/stitch-bash.rb`)
 - The bash Stitch, for apps still on the old platform, run as `stitch-bash` (`GitHubPrivateReleaseDownloadStrategy`)
 - Its script finds its library and templates beside itself, so all of it lives in `libexec`, behind a `stitch-bash` wrapper
@@ -66,13 +72,13 @@ Two patterns exist:
 
 **Public tools (tick, portal, switchboard, mint):** Standard Homebrew formulas with dual-arch macOS support: `depends_on :macos`, then `on_arm` / `on_intel` blocks at the top level, each with its own URL and sha256. Not inside an `on_macos` block: Homebrew 7 checks a trusted tap's formulae for every OS and arch when it's tapped, and a formula with no URL on Linux fails it ("invalid syntax in tap!"). Updated via `sha256_arm64` / `sha256_amd64` in the dispatch payload.
 
-**Private tools (stitch, stitch-bash):** Use `GitHubPrivateReleaseDownloadStrategy`, defined in each formula:
+**Private tools (stitch, press, stitch-bash):** Use `GitHubPrivateReleaseDownloadStrategy`, defined in each formula:
 - Requires `HOMEBREW_GITHUB_API_TOKEN`; without it the download stops, saying so
 - Finds the asset by its file name in the release the URL names, through GitHub's API, so the formula keeps no asset IDs
 - Hands the token to curl on stdin (`--header @-`), so it never shows in a command line; `secrets:` redacts it from any output, and `--disable` keeps a `~/.curlrc` out
 - Raises `CurlDownloadStrategyError` on a failure, never `odie`, which Homebrew's download threads swallow as `Error: exit`
-- Both formulae hold the same strategy, so a change to it is made in both
-- stitch has `on_arm` / `on_intel` blocks as the public tools do, updated by `sha256_arm64` / `sha256_amd64` (press's payload); stitch-bash one archive, updated by `sha256`; the workflow refuses a payload without them
+- Each formula holds the same strategy, so a change to it is made in each. press's copy is made in press's own repo, in `packaging/homebrew/press.rb`: from press 0.2.0 each release writes `Formula/press.rb` whole from that template, so a change made only here would be undone
+- stitch and press have `on_arm` / `on_intel` blocks as the public tools do, updated by `sha256_arm64` / `sha256_amd64` (press's payload); stitch-bash one archive, updated by `sha256`; the workflow refuses a payload without them
 
 **bash-toolkit** keeps the older `GitHubPrivateRepositoryDownloadStrategy`, which maps version numbers to GitHub release asset IDs and falls back to a plain download without a token.
 
@@ -82,7 +88,7 @@ The repository uses GitHub Actions (`.github/workflows/update-formula.yml`) to a
 1. **Trigger**: Repository dispatch events from source repositories
 2. **Payload**: Includes tool name, version, SHA256, asset ID, and download URL
 3. **Process**: Updates appropriate formula file and commits changes
-4. **Support**: Handles `stitch`, `stitch-bash`, `bash-toolkit`, `tick`, `portal`, `mint`, `switchboard`, `sitrep` and `spaceman` via tool parameter
+4. **Support**: Handles `stitch`, `press`, `stitch-bash`, `bash-toolkit`, `tick`, `portal`, `mint`, `switchboard`, `sitrep` and `spaceman` via tool parameter
 5. **One at a time**: a `concurrency` group queues a dispatch behind one running, so two can't race each other's `git push`. GitHub keeps only one pending run a group, so a third dispatch while one waits cancels the waiting one; a run times out after 5 minutes
 6. **Named by its payload**: `run-name` makes each run "Update <tool> to v<version>", so a sender waiting on its run (`press upload`, which kit, mint, switchboard, sitrep and spaceman release through) tells it from another tool's that started beside it; keep the name as it is, or change the sender with it
 
@@ -166,6 +172,7 @@ brew audit --cask --strict <tap>/[cask-name]
 - `Formula/tick.rb` - Tick formula (public, dual-arch macOS)
 - `Formula/portal.rb` - Portal formula (public, dual-arch macOS)
 - `Formula/stitch.rb` - Stitch formula, the Go Stitch (private, dual-arch macOS, custom download strategy)
+- `Formula/press.rb` - Press formula (private, dual-arch macOS, custom download strategy)
 - `Formula/stitch-bash.rb` - Stitch Bash formula, the bash Stitch as `stitch-bash` (private, custom download strategy)
 - `Formula/bash-toolkit.rb` - Bash Toolkit formula (private, custom download strategy)
 - `Casks/sitrep.rb` - SitRep cask (public, its release's zip by version in the url)
@@ -177,8 +184,8 @@ brew audit --cask --strict <tap>/[cask-name]
 
 ## Important Notes
 
-- Private tools (stitch, stitch-bash, bash-toolkit) require authentication; public tools (tick, portal) do not
-- bash-toolkit's asset IDs are updated by the workflow on each release; stitch and stitch-bash keep none
+- Private tools (stitch, press, stitch-bash, bash-toolkit) require authentication; public tools (tick, portal) do not
+- bash-toolkit's asset IDs are updated by the workflow on each release; stitch, press and stitch-bash keep none
 - The custom download strategy is essential for private repository access
 - Public formulas use dual-arch sha256 checksums instead of asset IDs
 - Workflow updates all formulas based on the tool parameter in the payload
